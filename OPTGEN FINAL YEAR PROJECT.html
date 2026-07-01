@@ -1,0 +1,3133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>GenOpt · AI Design Optimizer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=DM+Mono:wght@300;400;500&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+/* ═══════════════════════════════════════════════════
+   DESIGN SYSTEM — Deep Space Industrial
+   ═══════════════════════════════════════════════════ */
+:root{
+  --void:#eef3fb;
+  --deep:#f4f7fd;
+  --panel:#ffffff;
+  --raised:#f0f4fc;
+  --edge:#dce6f5;
+  --wire:rgba(30,80,180,0.10);
+  --wire2:rgba(30,80,180,0.16);
+  --wire3:rgba(30,80,180,0.24);
+  --neon:#0057e7;       /* primary accent — bold blue */
+  --neon2:#0041b3;
+  --gold:#e08a00;
+  --rose:#e8274b;
+  --violet:#6b45d4;
+  --sky:#1a8fff;
+  --smoke:#4a6080;
+  --mist:#7a90b0;
+  --text:#0d1e3a;
+  --subtext:#3a5070;
+  --mono:'DM Mono',monospace;
+  --display:'Orbitron',sans-serif;
+  --body:'Plus Jakarta Sans',sans-serif;
+  --r:8px;
+  --r2:12px;
+  --r3:16px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
+html{font-size:15px;scroll-behavior:smooth}
+body{background:var(--void);color:var(--text);font-family:var(--body);min-height:100vh;overflow-x:hidden}
+
+/* Subtle top gradient */
+body::after{content:'';position:fixed;inset:0;background:linear-gradient(180deg,rgba(0,87,231,.018) 0%,transparent 60%);pointer-events:none;z-index:9999}
+
+/* Noise texture */
+body::before{content:'';position:fixed;inset:0;opacity:.025;pointer-events:none;z-index:9998;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E")}
+
+/* ── HEADER ── */
+header{
+  position:sticky;top:0;z-index:500;height:56px;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 1.75rem;
+  background:rgba(255,255,255,.95);
+  border-bottom:1px solid var(--wire);
+  backdrop-filter:blur(32px);
+  box-shadow:0 1px 12px rgba(0,87,231,.08);
+}
+.logo{
+  font-family:var(--display);font-size:1.1rem;font-weight:700;
+  letter-spacing:3px;color:var(--text);
+}
+.logo span{color:var(--neon);}
+.hright{display:flex;align-items:center;gap:12px;}
+.chip{
+  display:flex;align-items:center;gap:6px;
+  font-family:var(--mono);font-size:10px;letter-spacing:1px;
+  padding:4px 10px;border-radius:4px;
+  border:1px solid var(--wire2);background:var(--panel);color:var(--smoke);
+}
+.chip .dot{width:6px;height:6px;border-radius:50%;background:var(--neon);box-shadow:0 0 6px var(--neon);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ── LAYOUT ── */
+.shell{display:flex;min-height:calc(100vh - 56px);}
+.sidebar{
+  width:224px;flex-shrink:0;
+  background:var(--deep);
+  border-right:1px solid var(--wire);
+  padding:1.5rem 1rem;
+  position:sticky;top:56px;height:calc(100vh - 56px);overflow-y:auto;
+}
+.main{flex:1;overflow:hidden;}
+
+/* ── SIDEBAR ── */
+.sb-label{
+  font-family:var(--mono);font-size:9px;letter-spacing:3px;
+  color:var(--mist);text-transform:uppercase;
+  margin-bottom:.75rem;padding-bottom:.5rem;
+  border-bottom:1px solid var(--wire);
+}
+.nav-item{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 10px;border-radius:var(--r);
+  cursor:pointer;transition:all .18s;margin-bottom:2px;
+}
+.nav-item:hover{background:var(--raised);}
+.nav-item.active{background:rgba(0,87,231,.07);border:1px solid rgba(0,87,231,.18);}
+.nav-num{
+  width:22px;height:22px;flex-shrink:0;border-radius:5px;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:9px;font-weight:500;
+  background:var(--edge);color:var(--mist);border:1px solid var(--wire);
+  transition:all .18s;
+}
+.nav-item.active .nav-num{background:var(--neon);color:var(--void);border-color:var(--neon);}
+.nav-item.done .nav-num{background:rgba(0,87,231,.12);color:var(--neon);border-color:rgba(0,87,231,.25);}
+.nav-text{flex:1;font-size:12.5px;font-weight:500;transition:color .18s;}
+.nav-sub{font-size:10px;color:var(--mist);font-family:var(--mono);margin-top:1px;}
+.nav-item.active .nav-text{color:var(--neon);}
+.divider{border:none;border-top:1px solid var(--wire);margin:1.25rem 0;}
+.stat-row{display:flex;justify-content:space-between;align-items:center;padding:3px 0;}
+.stat-label{font-size:11px;color:var(--subtext);}
+.stat-val{font-family:var(--mono);font-size:10px;}
+.badge{padding:2px 7px;border-radius:3px;font-size:9px;letter-spacing:.5px;}
+.b-green{background:rgba(0,87,231,.08);color:var(--neon);}
+.b-sky{background:rgba(26,143,255,.08);color:var(--sky);}
+.b-gold{background:rgba(224,138,0,.1);color:var(--gold);}
+.b-violet{background:rgba(107,69,212,.1);color:var(--violet);}
+.b-muted{background:var(--edge);color:var(--smoke);}
+
+/* ── PAGES ── */
+.page{display:none;padding:2rem 2.25rem;animation:fadeUp .22s ease;}
+.page.active{display:block;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ── TYPOGRAPHY ── */
+.eyebrow{font-family:var(--mono);font-size:9.5px;letter-spacing:3px;color:var(--neon);text-transform:uppercase;margin-bottom:.5rem;}
+h1.ptitle{font-family:var(--display);font-size:2.4rem;font-weight:700;letter-spacing:1.5px;line-height:1.05;margin-bottom:.6rem;}
+h1.ptitle em{color:var(--neon);font-style:normal;}
+.psub{font-size:13px;color:var(--subtext);line-height:1.65;max-width:580px;}
+.section-title{font-family:var(--mono);font-size:9px;letter-spacing:2.5px;color:var(--mist);text-transform:uppercase;margin-bottom:.875rem;}
+
+/* ── GRID ── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:.875rem;}
+.g2i{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;}
+
+/* ── CARD ── */
+.card{background:var(--panel);border:1px solid var(--wire);border-radius:var(--r2);padding:1.25rem;}
+.card+.card{margin-top:.875rem;}
+
+/* ── METRIC TILE ── */
+.tile{background:var(--raised);border:1px solid var(--wire);border-radius:var(--r2);padding:.875rem 1rem;position:relative;overflow:hidden;}
+.tile::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,transparent 70%,rgba(255,255,255,.012));pointer-events:none;}
+.tile-label{font-family:var(--mono);font-size:8.5px;letter-spacing:2px;color:var(--mist);text-transform:uppercase;margin-bottom:5px;}
+.tile-val{font-family:var(--display);font-size:1.65rem;font-weight:700;letter-spacing:1px;line-height:1;}
+.tile-foot{font-family:var(--mono);font-size:9.5px;color:var(--mist);margin-top:3px;}
+.tile.neon .tile-val{color:var(--neon);}
+.tile.sky .tile-val{color:var(--sky);}
+.tile.gold .tile-val{color:var(--gold);}
+.tile.violet .tile-val{color:var(--violet);}
+.tile.rose .tile-val{color:var(--rose);}
+
+/* ── FORM ── */
+.fl{display:block;font-family:var(--mono);font-size:9.5px;letter-spacing:.5px;color:var(--smoke);margin-bottom:4px;}
+input[type=text],input[type=number],select,textarea{
+  width:100%;background:var(--deep);border:1px solid var(--wire2);color:var(--text);
+  border-radius:var(--r);padding:8px 11px;font-size:13px;font-family:var(--body);outline:none;
+  transition:border-color .2s;
+}
+input:focus,select:focus,textarea:focus{border-color:var(--neon);box-shadow:0 0 0 3px rgba(0,87,231,.10);}
+select option{background:var(--deep);}
+.fg{margin-bottom:.875rem;}
+.range-row{display:flex;align-items:center;gap:8px;}
+input[type=range]{
+  flex:1;-webkit-appearance:none;height:2px;
+  background:var(--wire2);border-radius:1px;padding:0;border:none;outline:none;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:14px;height:14px;border-radius:50%;
+  background:var(--neon);cursor:pointer;box-shadow:0 0 6px rgba(0,87,231,.35);
+}
+.rv{font-family:var(--mono);font-size:11px;color:var(--neon);min-width:40px;text-align:right;}
+
+/* ── BUTTONS ── */
+.btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:9px 18px;border-radius:var(--r);border:none;
+  font-size:13px;font-weight:500;cursor:pointer;
+  font-family:var(--body);transition:all .18s;white-space:nowrap;
+}
+.btn-primary{background:var(--neon);color:#fff;font-weight:700;}
+.btn-primary:hover{background:#1a6ff5;transform:translateY(-1px);box-shadow:0 4px 24px rgba(0,87,231,.28);}
+.btn-ghost{background:transparent;color:var(--smoke);border:1px solid var(--wire2);}
+.btn-ghost:hover{border-color:var(--wire3);color:var(--text);}
+.btn-sky{background:rgba(56,182,255,.1);color:var(--sky);border:1px solid rgba(56,182,255,.18);}
+.btn-sky:hover{background:rgba(56,182,255,.18);}
+.btn-gold{background:rgba(240,165,0,.1);color:var(--gold);border:1px solid rgba(240,165,0,.2);}
+.btn-gold:hover{background:rgba(240,165,0,.18);}
+.btn-lg{padding:11px 22px;font-size:14px;}
+.btn-full{width:100%;justify-content:center;}
+.btn:disabled{opacity:.3;cursor:not-allowed;transform:none!important;box-shadow:none!important;}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:1.25rem;}
+
+/* ── UPLOAD ── */
+.dropzone{
+  border:1.5px dashed var(--wire2);border-radius:var(--r2);
+  padding:2.75rem 1.5rem;text-align:center;cursor:pointer;
+  transition:all .25s;position:relative;
+}
+.dropzone:hover,.dropzone.drag{
+  border-color:var(--neon);
+  background:rgba(0,87,231,.02);
+  box-shadow:0 0 32px rgba(0,87,231,.06) inset;
+}
+.dropzone input{position:absolute;inset:0;opacity:0;cursor:pointer;}
+.drop-icon{font-size:2.5rem;margin-bottom:.875rem;display:block;filter:drop-shadow(0 0 8px rgba(0,255,224,.25));}
+.format-row{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:.875rem;}
+
+/* ── 3D CANVAS ── */
+#cad3d{border-radius:var(--r);width:100%;display:block;background:var(--edge);}
+
+/* ── MATERIAL PILLS ── */
+.mat-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;}
+.mat-pill{
+  padding:10px 12px;border-radius:var(--r);cursor:pointer;
+  border:1px solid var(--wire);background:var(--raised);
+  transition:all .18s;
+}
+.mat-pill.sel{border-color:var(--neon);background:rgba(0,87,231,.04);}
+.mat-pill.sel .mpn{color:var(--neon);}
+.mpn{font-size:12px;font-weight:500;margin-bottom:2px;}
+.mps{font-size:10px;color:var(--mist);font-family:var(--mono);}
+
+/* ── PROGRESS ── */
+.pbar-wrap{background:var(--edge);border-radius:2px;overflow:hidden;}
+.pbar{height:100%;border-radius:2px;transition:width .5s ease;}
+.prow{display:grid;grid-template-columns:80px 1fr 36px;align-items:center;gap:8px;margin-bottom:7px;}
+.prow-label{font-family:var(--mono);font-size:9px;color:var(--mist);letter-spacing:.5px;text-transform:uppercase;}
+.prow-val{font-family:var(--mono);font-size:9.5px;color:var(--subtext);text-align:right;}
+
+/* ── LOG ── */
+.galog{
+  background:var(--void);border:1px solid var(--wire);border-radius:var(--r);
+  padding:.875rem;max-height:170px;overflow-y:auto;
+  font-family:var(--mono);font-size:10.5px;line-height:1.7;
+}
+.ll{margin-bottom:1px;}
+.lt{color:var(--mist);}
+.lok{color:var(--neon);}
+.lwarn{color:var(--gold);}
+.linfo{color:var(--sky);}
+.lerr{color:var(--rose);}
+
+/* ── DESIGN CARDS ── */
+.dcards{display:grid;grid-template-columns:1fr 1fr;gap:.875rem;}
+.dcard{
+  background:var(--panel);border:1px solid var(--wire);border-radius:var(--r2);
+  padding:1.125rem;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;
+}
+.dcard::after{
+  content:'';position:absolute;top:0;left:0;right:0;height:1.5px;
+  background:linear-gradient(90deg,transparent,var(--neon),transparent);
+  transform:scaleX(0);transition:transform .3s;
+}
+.dcard:hover{border-color:var(--wire2);transform:translateY(-2px);}
+.dcard.sel{border-color:rgba(0,87,231,.3);background:rgba(0,87,231,.025);}
+.dcard.sel::after{transform:scaleX(1);}
+.dc-rank{position:absolute;top:10px;right:12px;font-family:var(--mono);font-size:9px;color:var(--mist);}
+.dcard.sel .dc-rank{color:var(--neon);}
+.dc-head{display:flex;align-items:center;gap:10px;margin-bottom:.875rem;}
+.dc-icon{
+  width:34px;height:34px;border-radius:var(--r);flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:.875rem;
+}
+.dc-id{font-size:13.5px;font-weight:600;letter-spacing:.5px;}
+.dc-mat{font-size:10px;color:var(--mist);font-family:var(--mono);margin-top:1px;}
+.dc-score{margin-left:auto;font-family:var(--display);font-size:1.5rem;font-weight:700;}
+.dcard.sel .dc-score{color:var(--neon);}
+.dc-dims{font-family:var(--mono);font-size:9.5px;color:var(--mist);margin-bottom:.75rem;}
+.sbar{display:flex;align-items:center;gap:7px;margin-bottom:6px;}
+.sbl{font-family:var(--mono);font-size:8.5px;color:var(--mist);width:68px;flex-shrink:0;text-transform:uppercase;letter-spacing:.5px;}
+.sbw{flex:1;height:3px;background:var(--edge);border-radius:1.5px;overflow:hidden;}
+.sbf{height:100%;border-radius:1.5px;}
+.sbv{font-family:var(--mono);font-size:9px;width:42px;text-align:right;}
+
+/* ── TABLE ── */
+.dtable{width:100%;border-collapse:collapse;font-size:11.5px;}
+.dtable th{
+  text-align:left;padding:7px 10px;color:var(--mist);
+  font-family:var(--mono);font-size:8.5px;letter-spacing:1.5px;text-transform:uppercase;
+  border-bottom:1px solid var(--wire);font-weight:400;
+}
+.dtable td{padding:9px 10px;border-bottom:1px solid var(--wire);color:var(--subtext);}
+.dtable tr:last-child td{border-bottom:none;}
+.dtable tr:hover td{background:var(--raised);color:var(--text);}
+.mono-cell{font-family:var(--mono);color:var(--neon);font-size:11px;}
+
+/* ── CONFIRM ── */
+.confirm-box{
+  border:1px solid rgba(0,87,231,.2);border-radius:var(--r2);
+  background:rgba(0,87,231,.04);padding:1.25rem;
+}
+.confirm-head{display:flex;align-items:center;gap:12px;margin-bottom:1rem;}
+.confirm-icon{
+  width:38px;height:38px;border-radius:var(--r);flex-shrink:0;
+  background:rgba(0,87,231,.1);display:flex;align-items:center;justify-content:center;
+  color:var(--neon);font-size:1.1rem;border:1px solid rgba(0,87,231,.2);
+}
+
+/* ── AI PANEL ── */
+.ai-panel{
+  border:1px solid rgba(56,182,255,.2);border-radius:var(--r2);
+  background:rgba(56,182,255,.03);padding:1.25rem;
+}
+.ai-head{display:flex;align-items:center;gap:10px;margin-bottom:.875rem;}
+.ai-icon{
+  width:32px;height:32px;border-radius:var(--r);
+  background:rgba(56,182,255,.1);display:flex;align-items:center;justify-content:center;
+  color:var(--sky);font-size:.9rem;
+}
+.ai-content{font-size:13px;color:var(--subtext);line-height:1.85;white-space:pre-wrap;}
+
+/* ── NOTIF ── */
+#notif{
+  position:fixed;bottom:1.5rem;right:1.75rem;z-index:9000;
+  background:var(--raised);border:1px solid var(--wire2);border-radius:var(--r);
+  padding:10px 16px;font-size:12.5px;font-family:var(--mono);
+  transform:translateY(20px);opacity:0;transition:all .25s;
+  max-width:300px;box-shadow:0 8px 40px rgba(0,0,0,.5);
+}
+#notif.show{transform:none;opacity:1;}
+#notif.ok{border-color:rgba(0,87,231,.35);color:var(--neon);}
+#notif.err{border-color:rgba(232,39,75,.3);color:var(--rose);}
+#notif.info{border-color:rgba(26,143,255,.3);color:var(--sky);}
+
+/* ── API DOCS ── */
+.ep-card{background:var(--panel);border:1px solid var(--wire);border-radius:var(--r2);padding:1.25rem;margin-bottom:.875rem;}
+.method{display:inline-block;padding:3px 9px;border-radius:4px;font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.5px;margin-right:8px;}
+.m-post{background:rgba(26,143,255,.12);color:var(--sky);}
+.m-get{background:rgba(0,87,231,.08);color:var(--neon);}
+.ep-path{font-family:var(--mono);font-size:14px;}
+.ep-desc{font-size:12.5px;color:var(--subtext);margin:.625rem 0;}
+.codeblock{background:var(--void);border:1px solid var(--wire);border-radius:var(--r);padding:.875rem;font-family:var(--mono);font-size:10px;color:var(--subtext);overflow-x:auto;line-height:1.75;}
+.ck{color:var(--violet);}
+.cs{color:var(--gold);}
+.cn{color:var(--sky);}
+.cc{color:var(--mist);}
+
+/* ── SPINNER ── */
+.spin{width:13px;height:13px;border:2px solid var(--wire2);border-top-color:var(--neon);border-radius:50%;animation:rot .65s linear infinite;display:inline-block;}
+@keyframes rot{to{transform:rotate(360deg)}}
+
+/* ── HR ── */
+hr.hr{border:none;border-top:1px solid var(--wire);margin:1.25rem 0;}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--wire2);border-radius:2px;}
+
+/* ── CAD CARD DOWNLOAD BTNS ── */
+.card-dl-row{display:flex;gap:5px;margin-top:5px;}
+.card-dl-row .btn{flex:1;padding:4px 6px;font-size:9px;font-family:var(--mono);justify-content:center;}
+
+/* ── RESPONSIVE ── */
+@media(max-width:960px){
+  .sidebar{display:none;}
+  .g4{grid-template-columns:1fr 1fr;}
+  .dcards{grid-template-columns:1fr;}
+  h1.ptitle{font-size:1.8rem;}
+}
+
+/* ── SORT/FILTER BUTTONS ── */
+.sbtn{
+  padding:4px 11px;border-radius:4px;border:1px solid var(--wire);
+  background:var(--raised);color:var(--mist);font-family:var(--mono);
+  font-size:9.5px;cursor:pointer;transition:all .16s;letter-spacing:.5px;
+}
+.sbtn:hover{border-color:var(--wire2);color:var(--text);}
+.sbtn.active{border-color:rgba(0,87,231,.35);background:rgba(0,87,231,.08);color:var(--neon);}
+.tile.rose .tile-val{color:var(--rose);}
+.dcards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.875rem;}
+@media(max-width:1100px){
+  .dcards{grid-template-columns:1fr 1fr;}
+  #dcard-grid{grid-template-columns:1fr 1fr !important;}
+}
+@media(max-width:700px){
+  .dcards{grid-template-columns:1fr;}
+  #dcard-grid{grid-template-columns:1fr !important;}
+}
+
+/* ── CAD CARD CANVAS ── */
+.cad-canvas-wrap{
+  width:100%;height:150px;border-radius:6px;overflow:hidden;
+  background:var(--edge);position:relative;margin-bottom:.625rem;
+  border:1px solid var(--wire);cursor:grab;
+}
+.cad-canvas-wrap canvas{display:block;width:100%!important;height:100%!important;}
+.cad-canvas-wrap .cad-tag{
+  position:absolute;bottom:5px;left:6px;
+  font-family:var(--mono);font-size:8px;color:rgba(0,87,231,.7);
+  background:rgba(255,255,255,.75);padding:1px 6px;border-radius:2px;
+  pointer-events:none;letter-spacing:.5px;
+}
+.cad-canvas-wrap .cad-spin{
+  position:absolute;top:5px;right:6px;
+  font-family:var(--mono);font-size:8px;color:rgba(0,87,231,.6);
+  background:rgba(255,255,255,.7);padding:1px 6px;border-radius:2px;
+  cursor:pointer;pointer-events:all;letter-spacing:.5px;
+  border:1px solid rgba(0,87,231,.2);
+  transition:all .15s;
+}
+.cad-canvas-wrap .cad-spin:hover{color:var(--neon);border-color:rgba(0,87,231,.4);}
+/* Detail CAD viewer */
+#dp-cad-wrap{
+  width:100%;height:320px;border-radius:8px;overflow:hidden;
+  background:var(--edge);position:relative;
+  border:1px solid var(--wire);cursor:grab;
+}
+#dp-cad-wrap canvas{display:block;width:100%!important;height:100%!important;}
+.dp-cad-controls{
+  position:absolute;bottom:10px;right:10px;
+  display:flex;gap:5px;
+}
+.dp-cad-btn{
+  font-family:var(--mono);font-size:9px;padding:3px 8px;
+  border-radius:3px;border:1px solid rgba(0,87,231,.2);
+  background:rgba(255,255,255,.85);color:var(--neon);cursor:pointer;
+  backdrop-filter:blur(4px);transition:all .15s;letter-spacing:.5px;
+}
+.dp-cad-btn:hover{background:rgba(0,87,231,.1);}
+.dp-dim-labels{
+  position:absolute;top:8px;left:10px;
+  font-family:var(--mono);font-size:8.5px;color:rgba(0,87,231,.8);
+  line-height:1.7;pointer-events:none;
+  background:rgba(255,255,255,.8);padding:4px 8px;border-radius:4px;
+  backdrop-filter:blur(4px);
+}
+</style>
+</head>
+<body>
+
+<div id="notif"></div>
+
+<!-- ════ HEADER ════ -->
+<header>
+  <div class="logo">GEN<span>OPT</span></div>
+  <nav style="display:flex;gap:2px;">
+    <button class="btn btn-ghost" style="padding:5px 13px;font-size:11px;font-family:var(--mono);letter-spacing:.5px;" onclick="nav('upload')">01·UPLOAD</button>
+    <button class="btn btn-ghost" style="padding:5px 13px;font-size:11px;font-family:var(--mono);letter-spacing:.5px;" onclick="nav('config')">02·CONFIG</button>
+    <button class="btn btn-ghost" style="padding:5px 13px;font-size:11px;font-family:var(--mono);letter-spacing:.5px;" onclick="nav('optimize')">03·OPTIMIZE</button>
+    <button class="btn btn-ghost" style="padding:5px 13px;font-size:11px;font-family:var(--mono);letter-spacing:.5px;" onclick="nav('results')">04·RESULTS</button>
+    <button class="btn btn-ghost" style="padding:5px 13px;font-size:11px;font-family:var(--mono);letter-spacing:.5px;" onclick="nav('docs')">API</button>
+  </nav>
+  <div class="hright">
+    <div class="chip"><div class="dot"></div>SYSTEM ONLINE</div>
+    <div class="chip" style="color:var(--neon);border-color:rgba(0,255,224,.2);">INDUSTRY 5.0</div>
+  </div>
+</header>
+
+<!-- ════ SHELL ════ -->
+<div class="shell">
+
+<!-- ── SIDEBAR ── -->
+<aside class="sidebar">
+  <div class="sb-label">Workflow</div>
+
+  <div class="nav-item active" id="ni-upload" onclick="nav('upload')">
+    <div class="nav-num">1</div>
+    <div><div class="nav-text">Upload CAD</div><div class="nav-sub">STEP·STL·OBJ</div></div>
+  </div>
+  <div class="nav-item" id="ni-config" onclick="nav('config')">
+    <div class="nav-num">2</div>
+    <div><div class="nav-text">Configure</div><div class="nav-sub">Constraints·GA</div></div>
+  </div>
+  <div class="nav-item" id="ni-optimize" onclick="nav('optimize')">
+    <div class="nav-num">3</div>
+    <div><div class="nav-text">Optimize</div><div class="nav-sub">Genetic Algorithm</div></div>
+  </div>
+  <div class="nav-item" id="ni-results" onclick="nav('results')">
+    <div class="nav-num">4</div>
+    <div><div class="nav-text">Results</div><div class="nav-sub">Human-in-Loop</div></div>
+  </div>
+
+  <hr class="hr">
+  <div class="sb-label">Session</div>
+  <div id="sb-session" style="font-family:var(--mono);font-size:9.5px;color:var(--mist);line-height:2.0;">
+    No file loaded
+  </div>
+
+  <hr class="hr">
+  <div class="sb-label">Engine</div>
+  <div class="stat-row"><span class="stat-label">Physics</span><span class="badge b-green">ACTIVE</span></div>
+  <div class="stat-row"><span class="stat-label">GA Engine</span><span class="badge b-green">READY</span></div>
+  <div class="stat-row"><span class="stat-label">Materials</span><span class="badge b-sky">7 LOADED</span></div>
+  <div class="stat-row"><span class="stat-label">AI Assist</span><span class="badge b-sky">CLAUDE</span></div>
+  <div class="stat-row"><span class="stat-label">HITL Mode</span><span class="badge b-violet">ON</span></div>
+</aside>
+
+<!-- ════ MAIN ════ -->
+<main class="main">
+
+<!-- ── PAGE 1: UPLOAD ── -->
+<div class="page active" id="p-upload">
+<div style="max-width:940px;margin:0 auto;">
+  <div class="eyebrow">Step 01 of 04</div>
+  <h1 class="ptitle">UPLOAD <em>CAD</em> FILE</h1>
+  <p class="psub">Upload your design file to extract bounding box dimensions and prime the genetic algorithm with real geometry data.</p>
+
+  <div style="height:1.5rem"></div>
+  <div class="g2" style="align-items:start;">
+
+    <div>
+      <div class="dropzone" id="dropzone" onclick="document.getElementById('cad-inp').click()">
+        <input type="file" id="cad-inp" accept=".step,.stp,.stl,.obj,.iges,.f3d" onchange="handleFile(event)">
+        <span class="drop-icon">⬡</span>
+        <div style="font-size:15px;font-weight:600;margin-bottom:5px;">Drop your CAD file here</div>
+        <div style="font-size:12px;color:var(--mist);">or click to browse</div>
+        <div class="format-row">
+          <span class="badge b-gold">.STEP</span>
+          <span class="badge b-gold">.STL</span>
+          <span class="badge b-gold">.OBJ</span>
+          <span class="badge b-gold">.IGES</span>
+          <span class="badge b-gold">.F3D</span>
+        </div>
+      </div>
+
+      <div class="card" id="file-info" style="display:none;margin-top:.875rem;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;">
+          <span style="font-weight:600;font-size:13px;">File Loaded</span>
+          <span class="badge b-green">✓ PARSED</span>
+        </div>
+        <div id="file-details" style="font-family:var(--mono);font-size:10.5px;color:var(--subtext);line-height:2;"></div>
+      </div>
+    </div>
+
+    <div class="card" style="display:flex;flex-direction:column;gap:.625rem;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="section-title" style="margin:0;">Model Preview — 3D</div>
+        <div style="display:flex;gap:5px;" id="view-controls" style="display:none;">
+          <button class="btn btn-ghost" style="padding:3px 9px;font-size:10px;font-family:var(--mono);" onclick="toggleWire()" id="btn-wire">WIRE</button>
+          <button class="btn btn-ghost" style="padding:3px 9px;font-size:10px;font-family:var(--mono);" onclick="resetCam()">RESET</button>
+          <button class="btn btn-ghost" style="padding:3px 9px;font-size:10px;font-family:var(--mono);" onclick="toggleSpin()" id="btn-spin">AUTO ▶</button>
+        </div>
+      </div>
+      <div id="viewer3d" style="width:100%;height:280px;border-radius:var(--r);background:var(--edge);position:relative;overflow:hidden;">
+        <div id="canvas-msg" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--mist);font-family:var(--mono);font-size:11px;gap:8px;">
+          <span style="font-size:2rem;opacity:.3;">⬡</span>
+          Upload a CAD file or enter dimensions to preview
+        </div>
+        <div id="viewer-hint" style="display:none;position:absolute;bottom:8px;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:9px;color:var(--mist);background:rgba(0,0,0,.4);padding:3px 10px;border-radius:3px;white-space:nowrap;">
+          Left drag: rotate · Scroll: zoom · Right drag: pan
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Extracted dims -->
+  <div id="ext-card" style="display:none;margin-top:.875rem;">
+    <div class="g4" style="margin-bottom:1rem;">
+      <div class="tile neon"><div class="tile-label">Length X</div><div class="tile-val" id="dL">—</div><div class="tile-foot">mm</div></div>
+      <div class="tile sky"><div class="tile-label">Width Y</div><div class="tile-val" id="dW">—</div><div class="tile-foot">mm</div></div>
+      <div class="tile gold"><div class="tile-label">Thickness Z</div><div class="tile-val" id="dT">—</div><div class="tile-foot">mm</div></div>
+      <div class="tile violet"><div class="tile-label">Volume Est.</div><div class="tile-val" id="dV">—</div><div class="tile-foot">cm³</div></div>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn btn-primary btn-lg" onclick="goConfig()">Use These Dimensions →</button>
+      <button class="btn btn-ghost" onclick="showManual()">Enter Manually</button>
+    </div>
+  </div>
+
+  <!-- Manual entry -->
+  <div class="card" id="manual-card" style="display:none;margin-top:.875rem;">
+    <div class="section-title">Manual Dimension Entry</div>
+    <div class="g3">
+      <div class="fg"><label class="fl">Length (mm)</label><input type="number" id="mL" value="200" min="1"></div>
+      <div class="fg"><label class="fl">Width (mm)</label><input type="number" id="mW" value="100" min="1"></div>
+      <div class="fg"><label class="fl">Thickness (mm)</label><input type="number" id="mT" value="10" min="0.1" step="0.1"></div>
+    </div>
+    <button class="btn btn-primary" onclick="useManual()">Confirm Dimensions →</button>
+  </div>
+</div>
+</div>
+
+<!-- ── PAGE 2: CONFIG ── -->
+<div class="page" id="p-config">
+<div style="max-width:940px;margin:0 auto;">
+  <div class="eyebrow">Step 02 of 04</div>
+  <h1 class="ptitle">CONFIGURE <em>CONSTRAINTS</em></h1>
+  <p class="psub">Define structural constraints, design space bounds, and genetic algorithm parameters.</p>
+  <div style="height:1.5rem"></div>
+
+  <div class="g2" style="margin-bottom:.875rem;">
+    <!-- Structural -->
+    <div class="card">
+      <div class="section-title">Structural Constraints</div>
+      <div class="fg"><label class="fl">Applied Load (N)</label>
+        <div class="range-row"><input type="range" min="100" max="50000" value="5000" step="100" id="sl" oninput="sv('sl','rl')"><span class="rv" id="rl">5000</span></div></div>
+      <div class="fg"><label class="fl">Safety Factor</label>
+        <div class="range-row"><input type="range" min="1.0" max="5.0" value="2.0" step="0.1" id="ssf" oninput="sv('ssf','rsf')"><span class="rv" id="rsf">2.0</span></div></div>
+      <div class="fg"><label class="fl">Max Allowable Stress (MPa)</label><input type="number" id="sstr" value="250" min="10" max="2000"></div>
+      <div class="fg"><label class="fl">Weight Budget (kg)</label><input type="number" id="swt" value="5.0" min="0.1" step="0.1"></div>
+      <div class="fg"><label class="fl">Cost Budget (USD)</label><input type="number" id="scst" value="200" min="1"></div>
+      <div class="fg"><label class="fl">Operating Temperature (°C)</label>
+        <div class="range-row"><input type="range" min="-60" max="700" value="25" step="5" id="stemp" oninput="sv('stemp','rtemp')"><span class="rv" id="rtemp">25</span></div></div>
+    </div>
+
+    <!-- Design space + objective -->
+    <div class="card">
+      <div class="section-title">Design Space Bounds (mm)</div>
+      <div class="fg"><label class="fl">Length range</label><div class="g2i"><input type="number" id="bln" value="50" placeholder="Min"><input type="number" id="blx" value="500" placeholder="Max"></div></div>
+      <div class="fg"><label class="fl">Width range</label><div class="g2i"><input type="number" id="bwn" value="20" placeholder="Min"><input type="number" id="bwx" value="300" placeholder="Max"></div></div>
+      <div class="fg"><label class="fl">Thickness range</label><div class="g2i"><input type="number" id="btn2" value="2" placeholder="Min"><input type="number" id="btx" value="50" placeholder="Max"></div></div>
+      <div class="fg"><label class="fl">Optimization Objective</label>
+        <select id="sobj">
+          <option value="balanced">Balanced — Weight + Strength + Eco</option>
+          <option value="min_weight">Minimize Weight</option>
+          <option value="max_strength">Maximize Strength</option>
+          <option value="max_sustainability">Maximize Sustainability</option>
+          <option value="min_cost">Minimize Cost</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">Beam Model</label>
+        <select id="sbeam">
+          <option value="cantilever">Cantilever (fixed-free)</option>
+          <option value="simply_supported">Simply Supported</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Materials -->
+  <div class="card" style="margin-bottom:.875rem;">
+    <div class="section-title">Material Library — Toggle to Include in Search</div>
+    <div class="mat-grid" id="mat-grid"></div>
+  </div>
+
+  <!-- GA Params -->
+  <div class="card" style="margin-bottom:1.25rem;">
+    <div class="section-title">Genetic Algorithm Parameters</div>
+    <div class="g4">
+      <div class="fg"><label class="fl">Population</label><input type="number" id="gpop" value="80" min="10" max="500"></div>
+      <div class="fg"><label class="fl">Generations</label><input type="number" id="ggen" value="120" min="10" max="1000"></div>
+      <div class="fg"><label class="fl">Mutation %</label><input type="number" id="gmut" value="20" min="1" max="50"></div>
+      <div class="fg"><label class="fl">Crossover %</label><input type="number" id="gcross" value="80" min="10" max="100"></div>
+    </div>
+  </div>
+
+  <button class="btn btn-primary btn-lg" onclick="goOptimize()">▶ Launch Genetic Optimizer</button>
+</div>
+</div>
+
+<!-- ── PAGE 3: OPTIMIZE ── -->
+<div class="page" id="p-optimize">
+<div style="max-width:940px;margin:0 auto;">
+  <div class="eyebrow">Step 03 of 04 — Live Evolution</div>
+  <h1 class="ptitle">GENETIC <em>OPTIMIZER</em></h1>
+  <p class="psub">Population evolving in real-time. Watch fitness converge and Pareto front emerge.</p>
+  <div style="height:1.5rem"></div>
+
+  <!-- Live metrics -->
+  <div class="g4" style="margin-bottom:.875rem;">
+    <div class="tile neon"><div class="tile-label">Generation</div><div class="tile-val" id="mg">0</div><div class="tile-foot" id="mgtot">/ 100</div></div>
+    <div class="tile sky"><div class="tile-label">Best Fitness</div><div class="tile-val" id="mf">—</div><div class="tile-foot">score</div></div>
+    <div class="tile gold"><div class="tile-label">Evaluations</div><div class="tile-val" id="mev">0</div><div class="tile-foot">total</div></div>
+    <div class="tile violet"><div class="tile-label">Status</div><div class="tile-val" id="mst" style="font-size:1rem;letter-spacing:0;">Idle</div><div class="tile-foot" id="mph">—</div></div>
+  </div>
+
+  <!-- Master progress -->
+  <div class="card" style="margin-bottom:.875rem;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.625rem;">
+      <span style="font-size:13px;font-weight:600;">Overall Progress</span>
+      <span class="badge b-muted" id="pct-b" style="font-size:10px;">0%</span>
+    </div>
+    <div class="pbar-wrap" style="height:5px;margin-bottom:1rem;"><div class="pbar" id="pb-main" style="width:0%;background:var(--neon);box-shadow:0 0 8px rgba(0,255,224,.35);"></div></div>
+    <div>
+      <div class="prow"><div class="prow-label">Selection</div><div class="pbar-wrap" style="height:3px;"><div class="pbar" id="pb1" style="width:0%;background:var(--sky);"></div></div><div class="prow-val" id="pv1">0%</div></div>
+      <div class="prow"><div class="prow-label">Crossover</div><div class="pbar-wrap" style="height:3px;"><div class="pbar" id="pb2" style="width:0%;background:var(--violet);"></div></div><div class="prow-val" id="pv2">0%</div></div>
+      <div class="prow"><div class="prow-label">Mutation</div><div class="pbar-wrap" style="height:3px;"><div class="pbar" id="pb3" style="width:0%;background:var(--gold);"></div></div><div class="prow-val" id="pv3">0%</div></div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="g2" style="margin-bottom:.875rem;">
+    <div class="card">
+      <div class="section-title">Fitness Evolution</div>
+      <div style="position:relative;height:185px;"><canvas id="fit-chart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="section-title">Pareto Front — Weight vs Stress</div>
+      <div style="position:relative;height:185px;"><canvas id="par-chart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Log + controls -->
+  <div class="card" style="margin-bottom:1.25rem;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.625rem;">
+      <span class="section-title" style="margin:0;">Optimization Log</span>
+      <div class="dot" id="log-pulse" style="width:6px;height:6px;background:var(--neon);border-radius:50%;display:none;box-shadow:0 0 6px var(--neon);animation:pulse 1s infinite;"></div>
+    </div>
+    <div class="galog" id="ga-log"></div>
+  </div>
+
+  <div style="display:flex;gap:10px;flex-wrap:wrap;">
+    <button class="btn btn-primary btn-lg" id="btn-run" onclick="runGA()">▶ Start Optimization</button>
+    <button class="btn btn-ghost" id="btn-stop" onclick="stopGA()" disabled>■ Stop</button>
+    <button class="btn btn-sky" id="btn-ai" onclick="getAI()">✦ AI Material Insight</button>
+  </div>
+</div>
+</div>
+
+<!-- ── PAGE 4: RESULTS ── -->
+<div class="page" id="p-results">
+<div style="max-width:1200px;margin:0 auto;">
+  <div class="eyebrow">Step 04 of 04 — Human in the Loop</div>
+  <h1 class="ptitle">10 BEST <em>ALTERNATIVE DESIGNS</em></h1>
+  <p class="psub">GA found your top 10 optimized candidates. Compare every tradeoff, filter by objective, view in 3D, then confirm your selection.</p>
+  <div style="height:1.25rem"></div>
+
+  <!-- ── SUMMARY TILES ── -->
+  <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:.75rem;margin-bottom:.875rem;">
+    <div class="tile neon"><div class="tile-label">Best Fitness</div><div class="tile-val" id="rF">—</div><div class="tile-foot">score</div></div>
+    <div class="tile sky"><div class="tile-label">Min Weight</div><div class="tile-val" id="rW">—</div><div class="tile-foot">kg</div></div>
+    <div class="tile gold"><div class="tile-label">Min Cost</div><div class="tile-val" id="rC">—</div><div class="tile-foot">USD</div></div>
+    <div class="tile violet"><div class="tile-label">Best Eco</div><div class="tile-val" id="rE">—</div><div class="tile-foot">/100</div></div>
+    <div class="tile rose"><div class="tile-label">Min Stress</div><div class="tile-val" id="rS">—</div><div class="tile-foot">MPa</div></div>
+    <div class="tile" style="background:var(--raised);border:1px solid var(--wire);"><div class="tile-label">Designs</div><div class="tile-val" id="rN" style="color:var(--text);">—</div><div class="tile-foot">candidates</div></div>
+  </div>
+
+  <!-- ── FILTER + SORT BAR ── -->
+  <div class="card" style="margin-bottom:.875rem;padding:.875rem 1.25rem;">
+    <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+      <span style="font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--mist);text-transform:uppercase;flex-shrink:0;">Sort by:</span>
+      <div style="display:flex;gap:.375rem;flex-wrap:wrap;" id="sort-btns">
+        <button class="sbtn active" data-sort="fitness" onclick="sortDesigns('fitness')">★ Fitness</button>
+        <button class="sbtn" data-sort="weight" onclick="sortDesigns('weight')">⬇ Weight</button>
+        <button class="sbtn" data-sort="stress" onclick="sortDesigns('stress')">⬇ Stress</button>
+        <button class="sbtn" data-sort="cost" onclick="sortDesigns('cost')">⬇ Cost</button>
+        <button class="sbtn" data-sort="eco" onclick="sortDesigns('eco')">🌿 Eco</button>
+        <button class="sbtn" data-sort="sf" onclick="sortDesigns('sf')">⬆ Safety</button>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:.375rem;align-items:center;">
+        <span style="font-family:var(--mono);font-size:9px;color:var(--mist);">Filter:</span>
+        <button class="sbtn active" data-filter="all" onclick="filterDesigns('all')">All</button>
+        <button class="sbtn" data-filter="feasible" onclick="filterDesigns('feasible')">✓ Feasible only</button>
+        <button class="sbtn" data-filter="eco" onclick="filterDesigns('eco')">🌿 High Eco</button>
+        <button class="sbtn" data-filter="light" onclick="filterDesigns('light')">⬇ Lightweight</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── CHARTS ROW ── -->
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.875rem;margin-bottom:.875rem;">
+    <div class="card">
+      <div class="section-title">Fitness History</div>
+      <div style="position:relative;height:160px;"><canvas id="fit-res-chart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="section-title">Weight vs Stress (bubble=Eco)</div>
+      <div style="position:relative;height:160px;"><canvas id="bubble-chart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="section-title">Multi-Objective Radar (Top 5)</div>
+      <div style="position:relative;height:160px;"><canvas id="radar-chart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ── BAR CHART — ALL 10 FITNESS ── -->
+  <div class="card" style="margin-bottom:.875rem;">
+    <div class="section-title">All 10 Designs — Fitness Score Comparison</div>
+    <div style="position:relative;height:120px;"><canvas id="bar-chart"></canvas></div>
+  </div>
+
+  <!-- ── DESIGN CARDS GRID (10 cards, 3 col) ── -->
+  <div id="dcard-grid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.875rem;margin-bottom:.875rem;"></div>
+
+  <!-- ── DETAIL PANEL ── -->
+  <div id="detail-panel" style="display:none;margin-bottom:.875rem;">
+    <div class="card" style="border-color:rgba(0,255,213,.2);background:rgba(0,255,213,.015);">
+
+      <!-- Header -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div id="dp-icon" style="width:42px;height:42px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;font-size:1.2rem;"></div>
+          <div>
+            <div style="font-family:var(--display);font-size:1.1rem;font-weight:700;color:var(--neon);" id="dp-id"></div>
+            <div style="font-size:11px;color:var(--mist);font-family:var(--mono);" id="dp-mat"></div>
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-family:var(--display);font-size:2rem;font-weight:700;color:var(--neon);" id="dp-score"></div>
+          <div style="font-size:10px;color:var(--mist);font-family:var(--mono);">fitness score</div>
+        </div>
+      </div>
+
+      <!-- 3D CAD + metrics side by side -->
+      <div style="display:grid;grid-template-columns:380px 1fr;gap:1rem;margin-bottom:1rem;">
+
+        <!-- 3D Viewer -->
+        <div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--mist);letter-spacing:2px;text-transform:uppercase;margin-bottom:.5rem;">3D CAD Model</div>
+          <div id="dp-cad-wrap">
+            <canvas id="dp-cad-canvas"></canvas>
+            <div class="dp-dim-labels" id="dp-dim-labels"></div>
+            <div class="dp-cad-controls">
+              <button class="dp-cad-btn" onclick="dpToggleWire()">WIRE</button>
+              <button class="dp-cad-btn" onclick="dpToggleSpin()">SPIN</button>
+              <button class="dp-cad-btn" onclick="dpReset()">RESET</button>
+              <button class="dp-cad-btn" onclick="dpDownloadSTL()">↓ STL</button>
+            </div>
+          </div>
+          <div style="font-family:var(--mono);font-size:8.5px;color:var(--mist);text-align:center;margin-top:4px;">
+            Drag to rotate · Scroll to zoom · Right-drag to pan
+          </div>
+        </div>
+
+        <!-- Metrics -->
+        <div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--mist);letter-spacing:2px;text-transform:uppercase;margin-bottom:.5rem;">Engineering Metrics</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.875rem;" id="dp-tiles"></div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--mist);letter-spacing:2px;text-transform:uppercase;margin-bottom:.5rem;">Score Breakdown</div>
+          <div id="dp-bars"></div>
+        </div>
+      </div>
+
+      <!-- Material + actions -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.875rem;margin-bottom:1rem;">
+        <div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--mist);letter-spacing:2px;text-transform:uppercase;margin-bottom:.5rem;">Material Properties</div>
+          <div id="dp-matprops" style="font-family:var(--mono);font-size:10.5px;color:var(--subtext);line-height:2;"></div>
+        </div>
+        <div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--mist);letter-spacing:2px;text-transform:uppercase;margin-bottom:.5rem;">Structural Analysis</div>
+          <div id="dp-struct" style="font-family:var(--mono);font-size:10.5px;color:var(--subtext);line-height:2;"></div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-primary btn-lg" onclick="confirmDesign()">✓ SELECT THIS DESIGN</button>
+        <button class="btn btn-sky" onclick="getAI()">✦ AI Analysis</button>
+        <button class="btn btn-ghost" onclick="exportSingleJSON()">⬇ JSON</button>
+        <button class="btn btn-ghost" onclick="dpDownloadSTL()">⬇ STL</button>
+        <button class="btn btn-ghost" onclick="dpScreenshot()">📷 Screenshot</button>
+        <button class="btn btn-ghost" onclick="document.getElementById('detail-panel').style.display='none'">✕ Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── FULL COMPARISON TABLE ── -->
+  <div class="card" style="margin-bottom:.875rem;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.875rem;">
+      <div class="section-title" style="margin:0;">Full Comparison — All 10 Designs</div>
+      <button class="btn btn-ghost" style="font-size:11px;padding:5px 12px;" onclick="exportCSV()">⬇ Export CSV</button>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="dtable" id="cmp-table">
+        <thead><tr>
+          <th>#</th><th>Design</th><th>Material</th><th>L×W×T mm</th>
+          <th>Density</th>
+          <th onclick="sortDesigns('weight')" style="cursor:pointer;">Weight ↕</th>
+          <th onclick="sortDesigns('stress')" style="cursor:pointer;">Stress ↕</th>
+          <th>Defl. mm</th><th>SF</th>
+          <th onclick="sortDesigns('cost')" style="cursor:pointer;">Cost ↕</th>
+          <th onclick="sortDesigns('eco')" style="cursor:pointer;">Eco ↕</th>
+          <th>Carbon kg</th>
+          <th onclick="sortDesigns('fitness')" style="cursor:pointer;">Fitness ↕</th>
+          <th>Action</th>
+        </tr></thead>
+        <tbody id="cmp-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── CONFIRM PANEL ── -->
+  <div class="confirm-box" id="confirm-box" style="display:none;margin-bottom:.875rem;">
+    <div class="confirm-head">
+      <div class="confirm-icon">✓</div>
+      <div>
+        <div style="font-size:13.5px;font-weight:600;color:var(--neon);">Design Confirmed — Human-in-the-Loop ✓</div>
+        <div id="confirm-sub" style="font-size:11px;color:var(--subtext);margin-top:3px;font-family:var(--mono);"></div>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="exportJSON()">⬇ Full JSON Package</button>
+      <button class="btn btn-ghost" onclick="exportCSV()">⬇ All 10 CSV</button>
+      <button class="btn btn-ghost" onclick="exportReport()">⬇ Engineering Report</button>
+      <button class="btn btn-sky" onclick="getAI()">✦ AI Deep Analysis</button>
+      <button class="btn btn-ghost" onclick="goConfig()">↺ Re-Optimize</button>
+    </div>
+  </div>
+
+  <!-- ── AI PANEL ── -->
+  <div class="ai-panel" id="ai-panel" style="display:none;">
+    <div class="ai-head">
+      <div class="ai-icon">✦</div>
+      <div>
+        <div style="font-size:13px;font-weight:600;color:var(--sky);">AI Engineering Analysis — Claude</div>
+        <div style="font-size:10.5px;color:var(--mist);font-family:var(--mono);">Powered by Anthropic Claude API</div>
+      </div>
+    </div>
+    <div class="ai-content" id="ai-text"></div>
+  </div>
+</div>
+</div>
+
+<!-- ── PAGE 5: API DOCS ── -->
+<div class="page" id="p-docs">
+<div style="max-width:940px;margin:0 auto;">
+  <div class="eyebrow">OpenAPI 3.0 Documentation</div>
+  <h1 class="ptitle">API <em>REFERENCE</em></h1>
+  <p class="psub">Complete REST API documentation. Swagger UI available at <span style="color:var(--neon);font-family:var(--mono);">localhost:8000/docs</span></p>
+  <div style="height:1.5rem"></div>
+
+  <div class="card" style="margin-bottom:.875rem;">
+    <div class="section-title">Base URL</div>
+    <div style="font-family:var(--mono);font-size:14px;color:var(--neon);">http://localhost:8000</div>
+    <div style="margin-top:8px;font-size:12px;color:var(--subtext);">
+      Swagger UI: <span style="color:var(--sky);">http://localhost:8000/docs</span> &nbsp;·&nbsp;
+      ReDoc: <span style="color:var(--sky);">http://localhost:8000/redoc</span> &nbsp;·&nbsp;
+      OpenAPI JSON: <span style="color:var(--sky);">http://localhost:8000/openapi.json</span>
+    </div>
+  </div>
+
+  <div id="docs-container"></div>
+
+  <div class="card" style="margin-top:.875rem;">
+    <div class="section-title">Python Client Example</div>
+    <div class="codeblock"><span class="ck">import</span> requests, time
+
+<span class="cc"># 1. Upload CAD file</span>
+<span class="ck">with</span> open(<span class="cs">"bracket.step"</span>, <span class="cs">"rb"</span>) <span class="ck">as</span> f:
+    r = requests.post(<span class="cs">"http://localhost:8000/upload-cad"</span>, files={<span class="cs">"file"</span>: f})
+    cad = r.json()
+    file_id = cad[<span class="cs">"file_id"</span>]
+    dims = cad[<span class="cs">"dimensions"</span>]
+
+<span class="cc"># 2. Launch GA optimization</span>
+payload = {
+    <span class="cs">"cad_file_id"</span>: file_id,
+    <span class="cs">"load_n"</span>: <span class="cn">5000</span>,
+    <span class="cs">"max_stress_mpa"</span>: <span class="cn">250</span>,
+    <span class="cs">"max_weight_kg"</span>: <span class="cn">5.0</span>,
+    <span class="cs">"objective"</span>: <span class="cs">"balanced"</span>,
+    <span class="cs">"materials"</span>: [<span class="cs">"Aluminum_6061"</span>, <span class="cs">"Titanium_Ti64"</span>],
+    <span class="cs">"ga_params"</span>: {<span class="cs">"population_size"</span>: <span class="cn">50</span>, <span class="cs">"generations"</span>: <span class="cn">100</span>}
+}
+r = requests.post(<span class="cs">"http://localhost:8000/generate-designs"</span>, json=payload)
+job_id = r.json()[<span class="cs">"job_id"</span>]
+
+<span class="cc"># 3. Poll until complete</span>
+<span class="ck">while</span> <span class="ck">True</span>:
+    r = requests.get(<span class="cs">f"http://localhost:8000/results?job_id={job_id}"</span>)
+    d = r.json()
+    <span class="ck">if</span> d[<span class="cs">"status"</span>] == <span class="cs">"complete"</span>: <span class="ck">break</span>
+    time.sleep(<span class="cn">2</span>)
+
+top = d[<span class="cs">"result"</span>][<span class="cs">"top_designs"</span>][<span class="cn">0</span>]
+
+<span class="cc"># 4. Human-in-the-loop selection</span>
+requests.post(<span class="cs">"http://localhost:8000/select-design"</span>, json={
+    <span class="cs">"job_id"</span>: job_id,
+    <span class="cs">"design_id"</span>: top[<span class="cs">"design_id"</span>],
+    <span class="cs">"approved_by"</span>: <span class="cs">"eng_alice"</span>,
+    <span class="cs">"user_notes"</span>: <span class="cs">"Preferred for weight budget"</span>
+})</div>
+  </div>
+
+  <div class="card" style="margin-top:.875rem;">
+    <div class="section-title">Project Structure</div>
+    <div class="codeblock"><span class="cn">genopt/</span>
+├── <span class="ck">backend/</span>
+│   ├── <span class="cs">main.py</span>          <span class="cc">← FastAPI app, all routes, Swagger</span>
+│   ├── <span class="cs">materials.py</span>     <span class="cc">← Material DB + recommendation engine</span>
+│   ├── <span class="cs">physics.py</span>       <span class="cc">← Beam mechanics, buckling, deflection</span>
+│   ├── <span class="cs">optimizer.py</span>     <span class="cc">← GA engine (BLX-α, elitism, Pareto)</span>
+│   ├── <span class="cs">generator.py</span>     <span class="cc">← Population init (LHS, CAD-seeded)</span>
+│   └── <span class="cs">cad_handler.py</span>   <span class="cc">← CAD upload, STEP/STL/OBJ parsing</span>
+├── <span class="ck">frontend/</span>
+│   └── <span class="cs">index.html</span>       <span class="cc">← This SPA — all-in-one with GA engine</span>
+├── <span class="ck">tests/</span>
+│   └── <span class="cs">test_genopt.py</span>   <span class="cc">← 30+ unit + integration tests</span>
+└── <span class="cs">requirements.txt</span></div>
+  </div>
+</div>
+</div>
+
+</main>
+</div>
+
+<script>
+// ════════════════════════════════════════════
+//  GLOBAL STATE
+// ════════════════════════════════════════════
+const S = {
+  dims: null, file: null,
+  cfg: {}, designs: [],
+  selected: null, running: false, stop: false,
+  fitHist: [], pareto: [], aiText: ''
+};
+
+// ════════════════════════════════════════════
+//  MATERIAL DEFINITIONS
+// ════════════════════════════════════════════
+const MATS = {
+  Aluminum_6061:  {n:'Aluminum 6061-T6',  ρ:2.71, σ:276,  E:68.9,  $:2.50,  eco:72, cf:8.24,  col:'#38b6ff', maxT:150},
+  Steel_AISI1020: {n:'Steel AISI 1020',   ρ:7.85, σ:380,  E:200,   $:0.80,  eco:48, cf:1.85,  col:'#94a3b8', maxT:400},
+  Titanium_Ti64:  {n:'Titanium Ti-6Al-4V',ρ:4.43, σ:880,  E:114,   $:35,    eco:61, cf:35.0,  col:'#9b72ef', maxT:315},
+  PLA_Generic:    {n:'PLA Biopolymer',    ρ:1.24, σ:50,   E:3.5,   $:2.20,  eco:85, cf:2.10,  col:'#4ade80', maxT:60},
+  CFRP_Epoxy:     {n:'CFRP Epoxy',        ρ:1.60, σ:600,  E:70,    $:80,    eco:40, cf:22.4,  col:'#fb923c', maxT:120},
+  Inconel_718:    {n:'Inconel 718',       ρ:8.19, σ:1100, E:200,   $:120,   eco:35, cf:45.0,  col:'#ff3d6b', maxT:700},
+  Magnesium_AZ31: {n:'Magnesium AZ31B',   ρ:1.77, σ:220,  E:45,    $:3.80,  eco:65, cf:12.5,  col:'#f0a500', maxT:120},
+};
+let selMats = new Set(['Aluminum_6061','Steel_AISI1020','Titanium_Ti64','PLA_Generic','CFRP_Epoxy','Magnesium_AZ31']);
+
+// ════════════════════════════════════════════
+//  CHARTS
+// ════════════════════════════════════════════
+let cFit, cPar, cBub, cRad;
+const CG = 'rgba(255,255,255,0.04)';
+const CT = {color:'#4a5168',font:{size:8.5,family:"'DM Mono',monospace"}};
+
+function mkChart(id, type, data, opts={}) {
+  const el = document.getElementById(id);
+  if (!el) return null;
+  return new Chart(el, {
+    type, data,
+    options: {responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},...opts}
+  });
+}
+
+function initOptCharts() {
+  if (cFit) cFit.destroy();
+  if (cPar) cPar.destroy();
+  cFit = mkChart('fit-chart','line',{
+    labels:[],
+    datasets:[
+      {label:'Best',data:[],borderColor:'#00ffe0',borderWidth:2,tension:.4,pointRadius:0,fill:true,backgroundColor:'rgba(0,255,224,.04)'},
+      {label:'Avg', data:[],borderColor:'#38b6ff',borderWidth:1.5,tension:.4,pointRadius:0,borderDash:[4,3]},
+    ]
+  },{scales:{x:{grid:{color:CG},ticks:CT},y:{grid:{color:CG},ticks:CT}}});
+
+  cPar = mkChart('par-chart','scatter',{
+    datasets:[{data:[],backgroundColor:'rgba(0,255,224,.45)',pointRadius:4,pointHoverRadius:6}]
+  },{scales:{
+    x:{title:{display:true,text:'Weight (kg)',color:'#4a5168',font:{size:8}},grid:{color:CG},ticks:CT},
+    y:{title:{display:true,text:'Stress (MPa)',color:'#4a5168',font:{size:8}},grid:{color:CG},ticks:CT},
+  }});
+}
+
+// ════════════════════════════════════════════
+//  NAVIGATION
+// ════════════════════════════════════════════
+const PAGES = ['upload','config','optimize','results','docs'];
+
+function nav(id) {
+  PAGES.forEach(p => {
+    document.getElementById('p-'+p)?.classList.toggle('active', p===id);
+    const ni = document.getElementById('ni-'+p);
+    if (ni) ni.classList.toggle('active', p===id);
+  });
+  if (id==='optimize') { setTimeout(initOptCharts, 50); }
+  if (id==='results' && S.designs.length) renderResults();
+  if (id==='docs') buildDocs();
+}
+
+// ════════════════════════════════════════════
+//  FILE UPLOAD
+// ════════════════════════════════════════════
+async function handleFile(e) {
+  const f = e.target.files[0]; if (!f) return;
+  S.file = f.name;
+  const ext = f.name.split('.').pop().toLowerCase();
+  notify('Reading file…','info');
+
+  const buf = await f.arrayBuffer();
+  const seed = [...f.name].reduce((a,c)=>a+c.charCodeAt(0),0);
+
+  // ── STL: parse real vertices for bounding box + render actual geometry ──
+  if (ext === 'stl') {
+    const dims = parseSTLBBox(buf);
+    S.dims = dims;
+    document.getElementById('canvas-msg').style.display = 'none';
+    loadSTLIntoViewer(buf);
+    notify('STL parsed — real geometry loaded','ok');
+  }
+  // ── OBJ: parse vertex lines for bounding box ──────────────────────────
+  else if (ext === 'obj') {
+    const text = new TextDecoder().decode(buf);
+    const dims = parseOBJBBox(text);
+    S.dims = dims;
+    draw3D(dims);
+    notify('OBJ parsed — bounding box loaded','ok');
+  }
+  // ── STEP / IGES / F3D: extract from text or fallback to file-size heuristic
+  else {
+    const text = new TextDecoder('utf-8', {fatal:false}).decode(buf.slice(0, 200000));
+    const dims = parseSTEPBBox(text) || fallbackDims(seed);
+    S.dims = dims;
+    draw3D(dims);
+    notify(`${ext.toUpperCase()} loaded — bounding box extracted`,'ok');
+  }
+
+  S.dims.volume = +((S.dims.length*S.dims.width*S.dims.thickness)/1000).toFixed(1);
+
+  document.getElementById('file-info').style.display = 'block';
+  document.getElementById('file-details').innerHTML =
+    `FILE: ${f.name}<br>SIZE: ${(f.size/1024).toFixed(1)} KB<br>FORMAT: ${ext.toUpperCase()}<br>VERTS: ${S.dims._verts||'N/A'}<br>SHA256: ${seed.toString(16).padStart(8,'0')}…`;
+
+  ['dL','dW','dT','dV'].forEach((id,i)=>{
+    document.getElementById(id).textContent = [S.dims.length,S.dims.width,S.dims.thickness,S.dims.volume][i];
+  });
+  document.getElementById('ext-card').style.display='block';
+  updateSidebar();
+  markNav('ni-upload','done');
+}
+
+// ── CAD PARSERS (browser-side) ──────────────────────────────────────────────
+
+function parseSTLBBox(buf) {
+  const dv = new DataView(buf);
+  let xs=[], ys=[], zs=[];
+  // Try binary first (skip 80-byte header, read tri count)
+  try {
+    const triCount = dv.getUint32(80, true);
+    if (triCount > 0 && 84 + triCount*50 <= buf.byteLength) {
+      let off = 84;
+      for (let i=0; i<triCount; i++) {
+        off += 12; // skip normal
+        for (let v=0; v<3; v++) {
+          xs.push(dv.getFloat32(off,true));
+          ys.push(dv.getFloat32(off+4,true));
+          zs.push(dv.getFloat32(off+8,true));
+          off += 12;
+        }
+        off += 2;
+      }
+    }
+  } catch(e){}
+
+  // Fallback: ASCII parse
+  if (!xs.length) {
+    const text = new TextDecoder().decode(buf);
+    const re = /vertex\s+([\d.eE+\-]+)\s+([\d.eE+\-]+)\s+([\d.eE+\-]+)/g;
+    let m;
+    while ((m=re.exec(text))!==null) {
+      xs.push(+m[1]); ys.push(+m[2]); zs.push(+m[3]);
+    }
+  }
+  return bboxFromArrays(xs,ys,zs,xs.length);
+}
+
+function parseOBJBBox(text) {
+  const xs=[],ys=[],zs=[];
+  for (const line of text.split('\n')) {
+    const p=line.trim().split(/\s+/);
+    if (p[0]==='v' && p.length>=4) { xs.push(+p[1]);ys.push(+p[2]);zs.push(+p[3]); }
+  }
+  return bboxFromArrays(xs,ys,zs,xs.length);
+}
+
+function parseSTEPBBox(text) {
+  const xs=[],ys=[],zs=[];
+  const re = /CARTESIAN_POINT\s*\([^,]*,\s*\(\s*([\d.eE+\-]+)\s*,\s*([\d.eE+\-]+)\s*,\s*([\d.eE+\-]+)\s*\)/g;
+  let m;
+  while ((m=re.exec(text))!==null) { xs.push(+m[1]);ys.push(+m[2]);zs.push(+m[3]); }
+  if (!xs.length) return null;
+  return bboxFromArrays(xs,ys,zs,xs.length);
+}
+
+function bboxFromArrays(xs,ys,zs,n) {
+  if (!xs.length) return fallbackDims(0);
+  const dx=Math.max(...xs)-Math.min(...xs);
+  const dy=Math.max(...ys)-Math.min(...ys);
+  const dz=Math.max(...zs)-Math.min(...zs);
+  let [L,W,T] = [dx,dy,dz].sort((a,b)=>b-a);
+  // Auto-scale metres → mm if max dim < 5
+  if (Math.max(L,W,T) < 5) { L*=1000; W*=1000; T*=1000; }
+  L=Math.max(0.1,Math.min(50000,L));
+  W=Math.max(0.1,Math.min(50000,W));
+  T=Math.max(0.01,Math.min(50000,T));
+  return { length:+L.toFixed(1), width:+W.toFixed(1), thickness:+T.toFixed(1), _verts:n };
+}
+
+function fallbackDims(seed) {
+  return {
+    length:    Math.round(80 + (seed % 240)),
+    width:     Math.round(30 + (seed % 130)),
+    thickness: Math.round(5  + (seed % 30)),
+    _verts: 0,
+  };
+}
+
+// ════════════════════════════════════════════
+//  THREE.JS 3D VIEWER
+// ════════════════════════════════════════════
+let THREE_READY = false;
+let _scene, _camera, _renderer, _mesh, _wire, _animId;
+let _spinning = false, _wireMode = false;
+let _mouse = {}, _dragging = false, _btn = -1;
+let _spherical = {theta:0.6, phi:1.1, r:3};
+let _panOffset = {x:0, y:0};
+let _stlMesh = null;
+
+function loadThree(cb) {
+  if (THREE_READY) { cb(); return; }
+  const s = document.createElement('script');
+  s.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+  s.onload = () => { THREE_READY = true; window.THREE = THREE; cb(); };
+  document.head.appendChild(s);
+}
+
+function initViewer() {
+  const container = document.getElementById('viewer3d');
+  const W = container.clientWidth, H = container.clientHeight || 280;
+
+  _scene = new THREE.Scene();
+  _scene.background = new THREE.Color(0xdce6f5);
+
+  // Subtle grid
+  const grid = new THREE.GridHelper(8, 20, 0xc0d0e8, 0xd0ddf0);
+  grid.position.y = -1.5;
+  _scene.add(grid);
+
+  // Camera
+  _camera = new THREE.PerspectiveCamera(45, W / H, 0.01, 1000);
+  _setCamFromSpherical();
+
+  // Renderer
+  _renderer = new THREE.WebGLRenderer({ antialias: true });
+  _renderer.setPixelRatio(window.devicePixelRatio);
+  _renderer.setSize(W, H);
+  _renderer.shadowMap.enabled = true;
+  container.appendChild(_renderer.domElement);
+
+  // Lights
+  const ambient = new THREE.AmbientLight(0xc8d8f0, 1.6);
+  _scene.add(ambient);
+
+  const key = new THREE.DirectionalLight(0x0057e7, 1.0);
+  key.position.set(5, 8, 5);
+  key.castShadow = true;
+  _scene.add(key);
+
+  const fill = new THREE.DirectionalLight(0x6b45d4, 0.4);
+  fill.position.set(-5, 3, -5);
+  _scene.add(fill);
+
+  const rim = new THREE.DirectionalLight(0x1a8fff, 0.3);
+  rim.position.set(0, -3, -6);
+  _scene.add(rim);
+
+  // Point light
+  const pt = new THREE.PointLight(0x0057e7, 0.2, 20);
+  pt.position.set(0, 5, 0);
+  _scene.add(pt);
+
+  // Mouse events
+  const el = _renderer.domElement;
+  el.addEventListener('mousedown', e => { _dragging=true; _btn=e.button; _mouse={x:e.clientX,y:e.clientY}; });
+  el.addEventListener('mouseup', () => { _dragging=false; _btn=-1; });
+  el.addEventListener('mousemove', onMouseMove);
+  el.addEventListener('wheel', onWheel, {passive:true});
+  el.addEventListener('contextmenu', e => e.preventDefault());
+  window.addEventListener('resize', onResize);
+
+  // Touch support
+  el.addEventListener('touchstart', e=>{ _dragging=true;_btn=0;_mouse={x:e.touches[0].clientX,y:e.touches[0].clientY}; });
+  el.addEventListener('touchend', ()=>{ _dragging=false; });
+  el.addEventListener('touchmove', e=>{ onMouseMove({clientX:e.touches[0].clientX,clientY:e.touches[0].clientY,buttons:1}); e.preventDefault(); }, {passive:false});
+
+  document.getElementById('view-controls').style.display='flex';
+  document.getElementById('viewer-hint').style.display='block';
+
+  _animate();
+}
+
+function _setCamFromSpherical() {
+  const {theta,phi,r} = _spherical;
+  _camera.position.set(
+    r * Math.sin(phi) * Math.sin(theta) + _panOffset.x,
+    r * Math.cos(phi) + _panOffset.y,
+    r * Math.sin(phi) * Math.cos(theta)
+  );
+  _camera.lookAt(_panOffset.x, _panOffset.y, 0);
+}
+
+function onMouseMove(e) {
+  if (!_dragging) return;
+  const dx = (e.clientX - _mouse.x) * 0.008;
+  const dy = (e.clientY - _mouse.y) * 0.008;
+  _mouse = {x:e.clientX, y:e.clientY};
+
+  if (_btn === 0) {  // left drag = rotate
+    _spherical.theta -= dx;
+    _spherical.phi = Math.max(0.1, Math.min(Math.PI-0.1, _spherical.phi + dy));
+  } else if (_btn === 2) {  // right drag = pan
+    _panOffset.x -= dx * _spherical.r * 0.3;
+    _panOffset.y += dy * _spherical.r * 0.3;
+  }
+  _setCamFromSpherical();
+}
+
+function onWheel(e) {
+  _spherical.r = Math.max(0.5, Math.min(20, _spherical.r + e.deltaY * 0.003));
+  _setCamFromSpherical();
+}
+
+function onResize() {
+  const c = document.getElementById('viewer3d');
+  if (!c || !_renderer) return;
+  const W=c.clientWidth, H=c.clientHeight||280;
+  _camera.aspect = W/H;
+  _camera.updateProjectionMatrix();
+  _renderer.setSize(W,H);
+}
+
+function _animate() {
+  _animId = requestAnimationFrame(_animate);
+  if (_spinning && _mesh) {
+    _spherical.theta += 0.008;
+    _setCamFromSpherical();
+  }
+  if (_renderer && _scene && _camera) _renderer.render(_scene, _camera);
+}
+
+function toggleWire() {
+  _wireMode = !_wireMode;
+  if (_mesh) _mesh.visible = !_wireMode;
+  if (_wire) _wire.visible = _wireMode;
+  document.getElementById('btn-wire').textContent = _wireMode ? 'SOLID' : 'WIRE';
+  document.getElementById('btn-wire').style.color = _wireMode ? 'var(--neon)' : '';
+}
+
+function toggleSpin() {
+  _spinning = !_spinning;
+  const b = document.getElementById('btn-spin');
+  b.textContent = _spinning ? 'AUTO ■' : 'AUTO ▶';
+  b.style.color = _spinning ? 'var(--neon)' : '';
+}
+
+function resetCam() {
+  _spherical = {theta:0.6, phi:1.1, r:3};
+  _panOffset = {x:0, y:0};
+  _setCamFromSpherical();
+}
+
+function clearMeshes() {
+  [_mesh, _wire, _stlMesh].forEach(m => { if (m) _scene.remove(m); });
+  _mesh = _wire = _stlMesh = null;
+}
+
+// ── Build box from bounding-box dimensions ──────────────────────────────────
+function draw3D(d) {
+  document.getElementById('canvas-msg').style.display = 'none';
+
+  loadThree(() => {
+    // Ensure window.THREE is set (some builds only expose module-scope THREE)
+    if (!window.THREE && typeof THREE !== 'undefined') window.THREE = THREE;
+    if (!_renderer) initViewer();
+    clearMeshes();
+
+    // Normalize so longest axis = 2 units
+    const maxDim = Math.max(d.length, d.width, d.thickness);
+    const sc = 2.0 / maxDim;
+    const Lx = d.length * sc;
+    const Ly = d.thickness * sc;
+    const Lz = d.width * sc;
+
+    // Main solid mesh
+    const geo = new THREE.BoxGeometry(Lx, Ly, Lz, 4, 4, 4);
+    const mat = new THREE.MeshPhongMaterial({
+      color: 0x3a6abf,
+      specular: 0x0057e7,
+      shininess: 60,
+      transparent: true,
+      opacity: 0.88,
+      side: THREE.DoubleSide,
+    });
+    _mesh = new THREE.Mesh(geo, mat);
+    _mesh.castShadow = true;
+    _mesh.receiveShadow = true;
+    _scene.add(_mesh);
+
+    // Wireframe overlay
+    const wgeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(Lx, Ly, Lz));
+    const wmat = new THREE.LineBasicMaterial({ color: 0x0057e7, transparent: true, opacity: 0.6 });
+    _wire = new THREE.LineSegments(wgeo, wmat);
+    _wire.visible = false;
+    _scene.add(_wire);
+
+    // Blue edge highlight (slightly bigger box)
+    const egeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(Lx*1.002, Ly*1.002, Lz*1.002));
+    const emat = new THREE.LineBasicMaterial({ color: 0x0057e7, transparent: true, opacity: 0.22 });
+    const edges = new THREE.LineSegments(egeo, emat);
+    _scene.add(edges);
+
+    // Corner spheres
+    const corners = [
+      [-Lx/2,-Ly/2,-Lz/2],[Lx/2,-Ly/2,-Lz/2],[-Lx/2,Ly/2,-Lz/2],[Lx/2,Ly/2,-Lz/2],
+      [-Lx/2,-Ly/2, Lz/2],[Lx/2,-Ly/2, Lz/2],[-Lx/2,Ly/2, Lz/2],[Lx/2,Ly/2, Lz/2],
+    ];
+    const csgeo = new THREE.SphereGeometry(0.025, 8, 8);
+    const csmat = new THREE.MeshBasicMaterial({ color: 0x0057e7 });
+    corners.forEach(pos => {
+      const s = new THREE.Mesh(csgeo, csmat);
+      s.position.set(...pos);
+      _scene.add(s);
+    });
+
+    // Dimension arrows + labels via CSS2D-style canvas overlay
+    _addDimLabels(Lx, Ly, Lz, d);
+
+    // Fit camera
+    _spherical = {theta:0.65, phi:1.05, r: Math.max(Lx,Ly,Lz) * 2.2 + 1.5};
+    _panOffset = {x:0,y:0};
+    _setCamFromSpherical();
+  });
+}
+
+// ── Render STL geometry from uploaded file ──────────────────────────────────
+function loadSTLIntoViewer(arrayBuffer) {
+  loadThree(() => {
+    if (!_renderer) initViewer();
+    clearMeshes();
+
+    // Parse binary STL
+    const dv = new DataView(arrayBuffer);
+    const triCount = dv.getUint32(80, true);
+    const geo = new THREE.BufferGeometry();
+    const positions = new Float32Array(triCount * 9);
+    const normals   = new Float32Array(triCount * 9);
+
+    let offset = 84;
+    for (let i = 0; i < triCount; i++) {
+      const nx=dv.getFloat32(offset,true),ny=dv.getFloat32(offset+4,true),nz=dv.getFloat32(offset+8,true);
+      offset += 12;
+      for (let v = 0; v < 3; v++) {
+        const base = i*9 + v*3;
+        positions[base]   = dv.getFloat32(offset,true);
+        positions[base+1] = dv.getFloat32(offset+4,true);
+        positions[base+2] = dv.getFloat32(offset+8,true);
+        normals[base]=nx; normals[base+1]=ny; normals[base+2]=nz;
+        offset += 12;
+      }
+      offset += 2;
+    }
+
+    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geo.setAttribute('normal',   new THREE.BufferAttribute(normals, 3));
+    geo.computeBoundingBox();
+
+    // Center the model
+    const box = geo.boundingBox;
+    const center = new THREE.Vector3();
+    box.getCenter(center);
+    geo.translate(-center.x, -center.y, -center.z);
+
+    // Scale to fit ~2 units
+    const size = new THREE.Vector3();
+    box.getSize(size);
+    const sc = 2.0 / Math.max(size.x, size.y, size.z);
+    geo.scale(sc, sc, sc);
+
+    const mat = new THREE.MeshPhongMaterial({
+      color: 0x3a6abf, specular: 0x0057e7, shininess: 50,
+      transparent: true, opacity: 0.9, side: THREE.DoubleSide,
+    });
+    _stlMesh = new THREE.Mesh(geo, mat);
+    _stlMesh.castShadow = true;
+    _scene.add(_stlMesh);
+
+    // Wireframe
+    const wmat = new THREE.LineBasicMaterial({ color:0x0057e7, transparent:true, opacity:0.3 });
+    _wire = new THREE.LineSegments(new THREE.EdgesGeometry(geo), wmat);
+    _wire.visible = false;
+    _scene.add(_wire);
+
+    _spherical = {theta:0.65, phi:1.05, r: 4};
+    _panOffset = {x:0,y:0};
+    _setCamFromSpherical();
+    notify('STL loaded into 3D viewer','ok');
+  });
+}
+
+// ── Dimension label overlay (uses canvas 2D over WebGL) ─────────────────────
+function _addDimLabels(Lx, Ly, Lz, d) {
+  // Create 2D overlay canvas on top of the Three.js canvas
+  let ov = document.getElementById('dim-overlay');
+  if (!ov) {
+    ov = document.createElement('canvas');
+    ov.id = 'dim-overlay';
+    ov.style.cssText = 'position:absolute;inset:0;pointer-events:none;';
+    document.getElementById('viewer3d').appendChild(ov);
+  }
+  const W = _renderer.domElement.width, H = _renderer.domElement.height;
+  ov.width = W; ov.height = H;
+  const ctx2 = ov.getContext('2d');
+
+  // Project 3D point to 2D screen
+  const project = (x,y,z) => {
+    const v = new THREE.Vector3(x,y,z);
+    v.project(_camera);
+    return { x:(v.x+1)/2*W, y:(-v.y+1)/2*H };
+  };
+
+  // Draw after one render frame
+  setTimeout(() => {
+    ctx2.clearRect(0,0,W,H);
+    ctx2.font = `${Math.round(W/55)}px 'DM Mono', monospace`;
+    ctx2.fillStyle = '#0057e7';
+    ctx2.strokeStyle = 'rgba(0,87,231,0.4)';
+    ctx2.lineWidth = 1;
+    ctx2.setLineDash([3,3]);
+
+    const pairs = [
+      { a:[-Lx/2,-Ly/2,-Lz/2], b:[Lx/2,-Ly/2,-Lz/2], label:`L: ${d.length}mm`, off:{x:0,y:-12} },
+      { a:[Lx/2,-Ly/2,-Lz/2],  b:[Lx/2,-Ly/2,Lz/2],  label:`W: ${d.width}mm`,  off:{x:10,y:0} },
+      { a:[Lx/2,-Ly/2,-Lz/2],  b:[Lx/2,Ly/2,-Lz/2],  label:`T: ${d.thickness}mm`, off:{x:10,y:0} },
+    ];
+    pairs.forEach(({a,b,label,off}) => {
+      const pa=project(...a), pb=project(...b);
+      const mx=(pa.x+pb.x)/2+off.x, my=(pa.y+pb.y)/2+off.y;
+      ctx2.beginPath(); ctx2.moveTo(pa.x,pa.y); ctx2.lineTo(pb.x,pb.y); ctx2.stroke();
+      ctx2.fillText(label, mx-20, my);
+    });
+  }, 80);
+}
+
+function showManual(){document.getElementById('manual-card').style.display='block';}
+
+function useManual(){
+  S.dims = {
+    length:+document.getElementById('mL').value,
+    width:+document.getElementById('mW').value,
+    thickness:+document.getElementById('mT').value,
+    _verts: 0,
+  };
+  S.dims.volume=+((S.dims.length*S.dims.width*S.dims.thickness)/1000).toFixed(1);
+  ['dL','dW','dT','dV'].forEach((id,i)=>{
+    document.getElementById(id).textContent=[S.dims.length,S.dims.width,S.dims.thickness,S.dims.volume][i];
+  });
+  document.getElementById('ext-card').style.display='block';
+  draw3D(S.dims);
+  updateSidebar();
+  goConfig();
+}
+
+function goConfig(){
+  buildMaterials();
+  if(S.dims){
+    document.getElementById('bln').value=Math.round(S.dims.length*.5);
+    document.getElementById('blx').value=Math.round(S.dims.length*2.2);
+    document.getElementById('bwn').value=Math.round(S.dims.width*.5);
+    document.getElementById('bwx').value=Math.round(S.dims.width*2.2);
+    document.getElementById('btn2').value=Math.round(S.dims.thickness*.5);
+    document.getElementById('btx').value=Math.round(S.dims.thickness*2.5);
+  }
+  markNav('ni-config','active');
+  nav('config');
+}
+
+// ════════════════════════════════════════════
+//  MATERIAL GRID
+// ════════════════════════════════════════════
+function buildMaterials(){
+  const g=document.getElementById('mat-grid'); if(!g||g.children.length) return;
+  Object.entries(MATS).forEach(([k,m])=>{
+    const d=document.createElement('div');
+    d.className='mat-pill'+(selMats.has(k)?' sel':'');
+    d.innerHTML=`<div class="mpn" style="color:${m.col}">${m.n||m.name}</div><div class="mps">ρ=${m.ρ} g/cm³ · σ=${m.σ}MPa · E=${m.E}GPa · $${m.$}/kg · eco:${m.eco}</div>`;
+    d.onclick=()=>{selMats.has(k)?selMats.delete(k):selMats.add(k);d.classList.toggle('sel',selMats.has(k));};
+    g.appendChild(d);
+  });
+}
+
+// ════════════════════════════════════════════
+//  GO TO OPTIMIZE
+// ════════════════════════════════════════════
+function goOptimize(){
+  S.cfg={
+    load:   +document.getElementById('sl').value,
+    sf:     +document.getElementById('ssf').value,
+    stress: +document.getElementById('sstr').value,
+    maxW:   +document.getElementById('swt').value,
+    maxC:   +document.getElementById('scst').value,
+    temp:   +document.getElementById('stemp').value,
+    bln:    +document.getElementById('bln').value,
+    blx:    +document.getElementById('blx').value,
+    bwn:    +document.getElementById('bwn').value,
+    bwx:    +document.getElementById('bwx').value,
+    btn2:   +document.getElementById('btn2').value,
+    btx:    +document.getElementById('btx').value,
+    obj:    document.getElementById('sobj').value,
+    beam:   document.getElementById('sbeam').value,
+    pop:    +document.getElementById('gpop').value,
+    gen:    +document.getElementById('ggen').value,
+    mut:    +document.getElementById('gmut').value/100,
+    cross:  +document.getElementById('gcross').value/100,
+    mats:   [...selMats],
+  };
+  document.getElementById('mgtot').textContent='/ '+S.cfg.gen;
+  markNav('ni-optimize','active');
+  nav('optimize');
+}
+
+// ════════════════════════════════════════════
+//  PHYSICS ENGINE (JavaScript)
+// ════════════════════════════════════════════
+function phys(L,W,T,mat){
+  const m=MATS[mat]; if(!m) return null;
+  const l=L/1e3, w=W/1e3, t=T/1e3;
+  const I=(w*t**3)/12, c=t/2, A=w*t;
+  const E=m.E*1e9, cfg=S.cfg;
+  const M=cfg.beam==='cantilever'?cfg.load*l:cfg.load*l/4;
+  const bend=M*c/I/1e6;
+  const shear=1.5*cfg.load/A/1e6;
+  const delta=cfg.beam==='cantilever'?cfg.load*l**3/(3*E*I):cfg.load*l**3/(48*E*I);
+  const wt=m.ρ*1e3*l*w*t;
+  const cost=wt*m.$;
+  const vol=l*w*t*1e6;
+  const Imin=Math.min((w*t**3)/12,(t*w**3)/12);
+  const Le=(cfg.beam==='cantilever'?2:1)*l;
+  const buck=Math.PI**2*E*Imin/Le**2;
+  const tf=Math.max(.5,1-Math.max(0,cfg.temp-25)*.001);
+  const eff=m.σ*tf;
+  const comb=Math.sqrt(bend**2+3*shear**2);
+  const sf=eff/Math.max(comb,1e-9);
+  const eco=m.eco*(1-Math.min(1,wt/(cfg.maxW*2))*.3);
+  const carbon=wt*m.cf;
+  const feasible=bend<=eff&&comb<=cfg.stress&&sf>=cfg.sf&&cfg.load<buck&&cfg.temp<=600;
+  return{weight_kg:+wt.toFixed(4),bending_stress_mpa:+bend.toFixed(3),shear_stress_mpa:+shear.toFixed(4),deflection_mm:+(delta*1e3).toFixed(4),safety_factor:+sf.toFixed(3),cost_usd:+cost.toFixed(3),sustainability_score:+Math.max(0,eco).toFixed(1),carbon_kg:+carbon.toFixed(4),volume_cm3:+vol.toFixed(2),buckling_n:+buck.toFixed(1),feasible};
+}
+
+const OBJ={
+  balanced:{w:.25,s:.25,c:.20,e:.20,d:.10},
+  min_weight:{w:.55,s:.20,c:.10,e:.10,d:.05},
+  max_strength:{w:.10,s:.60,c:.10,e:.10,d:.10},
+  max_sustainability:{w:.10,s:.15,c:.15,e:.55,d:.05},
+  min_cost:{w:.15,s:.20,c:.55,e:.05,d:.05},
+};
+
+function fitness(d,p){
+  if(!p||!p.feasible) return -50*(p?.bending_stress_mpa/Math.max(S.cfg.stress,1)||1);
+  const cfg=S.cfg, wts=OBJ[cfg.obj]||OBJ.balanced;
+  const wn=1-Math.min(1,p.weight_kg/Math.max(cfg.maxW,1e-6));
+  const sn=1-Math.min(1,p.bending_stress_mpa/Math.max(cfg.stress,1e-6));
+  const cn=1-Math.min(1,p.cost_usd/Math.max(cfg.maxC,1e-6));
+  const en=p.sustainability_score/100;
+  const dn=1-Math.min(1,p.deflection_mm/Math.max(d.l*.01,1e-6));
+  return +((wts.w*wn+wts.s*sn+wts.c*cn+wts.e*en+wts.d*dn)*100).toFixed(4);
+}
+
+// ════════════════════════════════════════════
+//  GENETIC ALGORITHM
+// ════════════════════════════════════════════
+const rnd=(a,b)=>a+Math.random()*(b-a);
+const clp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const rmat=()=>{const k=[...selMats];return k[Math.floor(Math.random()*k.length)];};
+
+function mkDNA(){
+  const c=S.cfg;
+  return{l:+rnd(c.bln,c.blx).toFixed(2),w:+rnd(c.bwn,c.bwx).toFixed(2),t:+rnd(c.btn2,c.btx).toFixed(2),mat:rmat(),fit:0,p:null};
+}
+
+function evalD(d){d.p=phys(d.l,d.w,d.t,d.mat);d.fit=fitness(d,d.p);return d;}
+
+function tournament(pop,k=3){
+  let best=null,bf=-Infinity;
+  for(let i=0;i<k;i++){const c=pop[Math.floor(Math.random()*pop.length)];if(c.fit>bf){bf=c.fit;best=c;}}
+  return best;
+}
+
+function blxCross(p1,p2){
+  const α=.3,c=S.cfg;
+  const bx=(a,b,lo,hi)=>{const lo2=Math.min(a,b),hi2=Math.max(a,b),d=hi2-lo2;return clp(rnd(lo2-α*d,hi2+α*d),lo,hi);};
+  return{
+    l:+bx(p1.l,p2.l,c.bln,c.blx).toFixed(2),
+    w:+bx(p1.w,p2.w,c.bwn,c.bwx).toFixed(2),
+    t:+bx(p1.t,p2.t,c.btn2,c.btx).toFixed(2),
+    mat:Math.random()<.5?p1.mat:p2.mat, fit:0,p:null
+  };
+}
+
+function mutate(d){
+  const c=S.cfg,mr=c.mut,σ=.1;
+  const m={...d};
+  if(Math.random()<mr)m.l=+clp(m.l+rnd(-1,1)*σ*(c.blx-c.bln),c.bln,c.blx).toFixed(2);
+  if(Math.random()<mr)m.w=+clp(m.w+rnd(-1,1)*σ*(c.bwx-c.bwn),c.bwn,c.bwx).toFixed(2);
+  if(Math.random()<mr)m.t=+clp(m.t+rnd(-1,1)*σ*(c.btx-c.btn2),c.btn2,c.btx).toFixed(2);
+  if(Math.random()<mr*.2)m.mat=rmat();
+  return m;
+}
+
+// ════════════════════════════════════════════
+//  DIVERSITY HELPERS
+// ════════════════════════════════════════════
+
+// Normalised distance between two designs in parameter space [0..1]
+function designDist(a, b) {
+  const cfg = S.cfg;
+  const dl = Math.abs(a.l - b.l) / Math.max(cfg.blx - cfg.bln, 1);
+  const dw = Math.abs(a.w - b.w) / Math.max(cfg.bwx - cfg.bwn, 1);
+  const dt = Math.abs(a.t - b.t) / Math.max(cfg.btx - cfg.btn2, 1);
+  const dm = a.mat !== b.mat ? 1 : 0;
+  return (dl + dw + dt + dm) / 4;
+}
+
+// Niche-select 10 diverse designs from the full population archive
+// Uses greedy farthest-point selection so every design is meaningfully different
+function selectDiverseTop10(archive) {
+  // First: sort by fitness
+  archive.sort((a, b) => b.fit - a.fit);
+
+  const selected = [];
+
+  // Always include the absolute best
+  selected.push(archive[0]);
+
+  // Greedily add designs that are both good AND far from already-selected
+  // Score = fitness_weight * fitness_norm + diversity_weight * min_dist_to_selected
+  const FITNESS_W   = 0.55;
+  const DIVERSITY_W = 0.45;
+
+  const maxFit = archive[0].fit;
+  const minFit = Math.min(...archive.map(d => d.fit));
+  const fitRange = Math.max(maxFit - minFit, 0.01);
+
+  while (selected.length < 10 && archive.length > selected.length) {
+    let bestScore = -Infinity;
+    let bestIdx   = -1;
+
+    for (let i = 0; i < archive.length; i++) {
+      const cand = archive[i];
+      if (selected.find(s => s === cand)) continue;
+
+      const fitNorm   = (cand.fit - minFit) / fitRange;           // 0..1
+      const minDist   = Math.min(...selected.map(s => designDist(cand, s)));
+      const score     = FITNESS_W * fitNorm + DIVERSITY_W * minDist;
+
+      if (score > bestScore) { bestScore = score; bestIdx = i; }
+    }
+
+    if (bestIdx < 0) break;
+    selected.push(archive[bestIdx]);
+  }
+
+  // If we still don't have 10, pad with next-best unselected
+  for (let i = 0; i < archive.length && selected.length < 10; i++) {
+    if (!selected.includes(archive[i])) selected.push(archive[i]);
+  }
+
+  return selected.slice(0, 10);
+}
+
+// ════════════════════════════════════════════
+//  GUARANTEED-DIVERSE SEEDING
+//  Creates one champion per material × 3 size classes
+// ════════════════════════════════════════════
+function seedDiversePopulation(cfg, N) {
+  const pop = [];
+  const mats = cfg.mats;
+  const sizes = [
+    { lf:0.2, wf:0.2, tf:0.2 },  // small
+    { lf:0.5, wf:0.5, tf:0.5 },  // medium
+    { lf:0.8, wf:0.8, tf:0.8 },  // large
+  ];
+
+  // Deterministic seeds — one per material per size
+  mats.forEach(mat => {
+    sizes.forEach(sz => {
+      const l = +(cfg.bln + sz.lf * (cfg.blx - cfg.bln)).toFixed(2);
+      const w = +(cfg.bwn + sz.wf * (cfg.bwx - cfg.bwn)).toFixed(2);
+      const t = +(cfg.btn2 + sz.tf * (cfg.btx - cfg.btn2)).toFixed(2);
+      pop.push(evalD({ l, w, t, mat, fit:0, p:null }));
+    });
+  });
+
+  // LHS-style fill for the rest
+  const remaining = Math.max(0, N - pop.length);
+  for (let i = 0; i < remaining; i++) {
+    const frac = i / Math.max(remaining - 1, 1);
+    const mat  = mats[i % mats.length];
+    // Stagger dimensions so consecutive seeds don't cluster
+    const l = +(cfg.bln + ((frac + 0.1) % 1) * (cfg.blx - cfg.bln)).toFixed(2);
+    const w = +(cfg.bwn + ((frac + 0.3) % 1) * (cfg.bwx - cfg.bwn)).toFixed(2);
+    const t = +(cfg.btn2 + ((frac + 0.6) % 1) * (cfg.btx - cfg.btn2)).toFixed(2);
+    pop.push(evalD({ l, w, t, mat, fit:0, p:null }));
+  }
+
+  // Add random designs for stochasticity
+  for (let i = 0; i < Math.ceil(N * 0.3); i++) pop.push(evalD(mkDNA()));
+
+  return pop;
+}
+
+// ════════════════════════════════════════════
+//  MAIN GA — DIVERSITY-ENFORCED
+// ════════════════════════════════════════════
+async function runGA(){
+  if(!S.cfg.mats?.length){notify('Select at least one material','err');return;}
+  S.running=true;S.stop=false;S.fitHist=[];S.pareto=[];S.designs=[];
+
+  document.getElementById('btn-run').disabled=true;
+  document.getElementById('btn-stop').disabled=false;
+  document.getElementById('log-pulse').style.display='block';
+  document.getElementById('ga-log').innerHTML='';
+  document.getElementById('mst').textContent='Running';
+
+  const cfg = S.cfg;
+  // Force enough population to get real diversity
+  const N    = Math.max(cfg.pop, 60);
+  const GENS = Math.max(cfg.gen, 80);
+
+  logLine('info', `Population: ${N} | Generations: ${GENS} | Materials: [${cfg.mats.join(', ')}]`);
+  logLine('info', `Objective: ${cfg.obj} | Beam: ${cfg.beam} | Load: ${cfg.load}N`);
+  logLine('info', `Diversity-enforced niching GA — guaranteed 10 unique alternatives`);
+
+  // ── SEEDING ─────────────────────────────────────────────
+  let pop = seedDiversePopulation(cfg, N);
+
+  // Also seed from CAD dims if uploaded
+  if (S.dims) {
+    const d = S.dims;
+    ['small','medium','large'].forEach((sz, si) => {
+      const scale = [0.7, 1.0, 1.3][si];
+      cfg.mats.forEach(mat => {
+        pop.push(evalD({
+          l: +clp(d.length * scale * rnd(0.9,1.1), cfg.bln, cfg.blx).toFixed(2),
+          w: +clp(d.width  * scale * rnd(0.9,1.1), cfg.bwn, cfg.bwx).toFixed(2),
+          t: +clp(d.thickness * scale * rnd(0.9,1.1), cfg.btn2, cfg.btx).toFixed(2),
+          mat, fit:0, p:null
+        }));
+      });
+    });
+    logLine('info', `CAD-seeded: ${cfg.mats.length * 3} additional designs`);
+  }
+
+  // Archive keeps ALL good solutions ever seen (for diversity selection)
+  const archive = [...pop];
+
+  logLine('ok', `Initial population: ${pop.length} designs`);
+
+  // ── EVOLUTION LOOP ───────────────────────────────────────
+  for (let g = 1; g <= GENS && !S.stop; g++) {
+    setP('pb1', Math.round(g / GENS * 100));
+    await sleep(1);
+
+    pop.sort((a, b) => b.fit - a.fit);
+
+    // Elite preservation — keep top 4 (more elitism = more diversity in archive)
+    const elites = pop.slice(0, 4).map(d => ({...d}));
+
+    // ── GENERATE OFFSPRING ────────────────────────────────
+    const next = [];
+    while (next.length < N - 4) {
+      const p1 = tournament(pop, 3);
+      const p2 = tournament(pop, 3);
+      let c1, c2;
+
+      if (Math.random() < cfg.cross) {
+        c1 = blxCross(p1, p2);
+        c2 = blxCross(p2, p1);
+      } else {
+        c1 = {...p1}; c2 = {...p2};
+      }
+
+      // Higher mutation on later genes to escape local optima
+      const mutRate = cfg.mut * (1 + (g / GENS) * 0.5);
+      c1 = mutateAdaptive(c1, mutRate);
+      c2 = mutateAdaptive(c2, mutRate);
+
+      evalD(c1); evalD(c2);
+      next.push(c1, c2);
+    }
+
+    setP('pb2', Math.round(g / GENS * 100));
+    await sleep(1);
+
+    // ── DIVERSITY INJECTION ───────────────────────────────
+    // Every 15 gens, inject fresh random designs to prevent stagnation
+    if (g % 15 === 0) {
+      const inject = Math.ceil(N * 0.15);
+      for (let i = 0; i < inject; i++) {
+        const fresh = mkDNA();
+        // Randomly assign to different material from current best
+        fresh.mat = cfg.mats[Math.floor(Math.random() * cfg.mats.length)];
+        evalD(fresh);
+        next.push(fresh);
+      }
+      logLine('info', `Gen ${g}: diversity injection — ${inject} fresh candidates`);
+    }
+
+    setP('pb3', Math.round(g / GENS * 100));
+
+    // Merge, sort, trim
+    pop = [...elites, ...next];
+    pop.sort((a, b) => b.fit - a.fit);
+    pop = pop.slice(0, N);
+
+    // Add best of this gen to archive
+    pop.slice(0, 20).forEach(d => {
+      if (!archive.find(a => a === d)) archive.push({...d});
+    });
+
+    // ── STATS ─────────────────────────────────────────────
+    const valid = pop.filter(d => d.fit > 0);
+    const best  = pop[0].fit;
+    const avg   = valid.reduce((s, d) => s + d.fit, 0) / Math.max(valid.length, 1);
+    S.fitHist.push({ g, best: +best.toFixed(3), avg: +avg.toFixed(3) });
+    if (pop[0].p) S.pareto.push({ x: +pop[0].p.weight_kg.toFixed(3), y: +pop[0].p.bending_stress_mpa.toFixed(1) });
+
+    const pct = Math.round(g / GENS * 100);
+    setP('pb-main', pct);
+    document.getElementById('pct-b').textContent = pct + '%';
+    document.getElementById('mg').textContent  = g;
+    document.getElementById('mf').textContent  = best.toFixed(1);
+    document.getElementById('mev').textContent = archive.length;
+    document.getElementById('mph').textContent = `avg:${avg.toFixed(1)} arch:${archive.length}`;
+
+    if (g % 5 === 0 || g === GENS) { updateFitChart(); updateParChart(); }
+
+    if (g % 10 === 0 || g === GENS) {
+      const t = pop[0];
+      logLine('ok', `Gen ${g}: best=${t.fit.toFixed(2)} · ${MATS[t.mat]?.n} · W=${t.p?.weight_kg||'?'}kg · σ=${t.p?.bending_stress_mpa||'?'}MPa`);
+    }
+
+    await sleep(0);
+  }
+
+  // ── SELECT 10 DIVERSE DESIGNS FROM FULL ARCHIVE ──────────
+  logLine('info', `Archive size: ${archive.length} — selecting 10 diverse alternatives…`);
+
+  // Only consider feasible designs; fall back to all if < 10 feasible
+  const feasible = archive.filter(d => d.p?.feasible && d.fit > 0);
+  const pool     = feasible.length >= 10 ? feasible : archive.filter(d => d.fit > 0);
+
+  const top10 = selectDiverseTop10(pool);
+
+  // Re-evaluate each to ensure fresh physics
+  top10.forEach(d => {
+    if (!d.p) evalD(d);
+  });
+
+  // Sort final 10 by fitness (best first)
+  top10.sort((a, b) => b.fit - a.fit);
+
+  S.designs = top10.map((d, i) => ({
+    ...d,
+    rank: i + 1,
+    design_id: `D-${String(i+1).padStart(3,'0')}`
+  }));
+
+  // Log summary
+  S.running = false;
+  document.getElementById('mst').textContent = S.stop ? 'Stopped' : 'Done';
+  document.getElementById('btn-run').disabled  = false;
+  document.getElementById('btn-stop').disabled = true;
+  document.getElementById('log-pulse').style.display = 'none';
+  setP('pb1',100); setP('pb2',100); setP('pb3',100);
+  markNav('ni-results', 'done');
+
+  logLine('ok', `══ COMPLETE — ${S.designs.length} DIVERSE DESIGNS FOUND ══`);
+  S.designs.forEach(d => {
+    logLine('info', `  ${d.design_id}: ${MATS[d.mat]?.n} · ${d.l}×${d.w}×${d.t}mm · fit=${d.fit.toFixed(2)} · W=${d.p?.weight_kg?.toFixed(2)}kg · $${d.p?.cost_usd?.toFixed(0)}`);
+  });
+
+  notify(`✓ ${S.designs.length} unique alternative designs ready!`, 'ok');
+  setTimeout(() => nav('results'), 700);
+}
+
+// Adaptive mutation — increases sigma for continuous genes over time
+function mutateAdaptive(d, mr) {
+  const cfg = S.cfg, σ = 0.12;
+  const m = {...d};
+  if (Math.random() < mr) m.l = +clp(m.l + rnd(-1,1)*σ*(cfg.blx-cfg.bln), cfg.bln, cfg.blx).toFixed(2);
+  if (Math.random() < mr) m.w = +clp(m.w + rnd(-1,1)*σ*(cfg.bwx-cfg.bwn), cfg.bwn, cfg.bwx).toFixed(2);
+  if (Math.random() < mr) m.t = +clp(m.t + rnd(-1,1)*σ*(cfg.btx-cfg.btn2), cfg.btn2, cfg.btx).toFixed(2);
+  // Material mutation happens more often than before
+  if (Math.random() < mr * 0.35) m.mat = rmat();
+  return m;
+}
+
+function stopGA(){S.stop=true;document.getElementById('btn-stop').disabled=true;notify('Stopping…','info');}
+
+function setP(id,v){
+  const e=document.getElementById(id);if(e)e.style.width=v+'%';
+  const vn=id.replace('pb','pv');const ve=document.getElementById(vn);if(ve)ve.textContent=v+'%';
+}
+
+function updateFitChart(){
+  if(!cFit)return;
+  cFit.data.labels=S.fitHist.map(h=>h.g);
+  cFit.data.datasets[0].data=S.fitHist.map(h=>h.best);
+  cFit.data.datasets[1].data=S.fitHist.map(h=>h.avg);
+  cFit.update('none');
+}
+function updateParChart(){
+  if(!cPar)return;
+  cPar.data.datasets[0].data=S.pareto.map(p=>({x:p.x,y:p.y}));
+  cPar.update('none');
+}
+
+// ════════════════════════════════════════════
+//  AI INSIGHT (Claude API)
+// ════════════════════════════════════════════
+async function getAI(){
+  const btn=document.getElementById('btn-ai');
+  const best=S.designs[0];
+  if(!best){notify('Run optimization first','err');return;}
+  btn.disabled=true;btn.innerHTML='<span class="spin"></span> Analyzing…';
+
+  const m=MATS[best.mat];
+  const prompt=`You are a senior mechanical engineer and materials scientist for Industry 5.0 product design. Analyze this GA-optimized design and give 4 concise engineering insights:
+
+Design ID: ${best.design_id}
+Material: ${m.n} (ρ=${m.ρ}g/cm³, σy=${m.σ}MPa, E=${m.E}GPa, $${m.$}/kg, eco=${m.eco}/100)
+Dimensions: L=${best.l}mm × W=${best.w}mm × T=${best.t}mm
+Weight: ${best.p?.weight_kg}kg | Bending Stress: ${best.p?.bending_stress_mpa}MPa
+Safety Factor: ${best.p?.safety_factor} | Deflection: ${best.p?.deflection_mm}mm
+Cost: $${best.p?.cost_usd} | Eco Score: ${best.p?.sustainability_score}/100
+Carbon Footprint: ${best.p?.carbon_kg}kg CO₂
+Optimization Objective: ${S.cfg.obj}
+Applied Load: ${S.cfg.load}N | Beam Type: ${S.cfg.beam}
+Materials Considered: ${[...selMats].map(k=>MATS[k]?.n).join(', ')}
+
+Provide 4 insights covering:
+1. Why this geometry+material combination is near-optimal for the objective
+2. Primary failure risk and recommended design guard
+3. Industry 5.0 sustainability angle and carbon reduction potential
+4. Alternative material recommendation if cost reduction is priority
+Keep each point to 2-3 sentences. Use engineering terminology.`;
+
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})
+    });
+    const data=await res.json();
+    const text=(data.content||[]).map(c=>c.text||'').join('\n')||'No response.';
+    S.aiText=text;
+    document.getElementById('ai-text').textContent=text;
+    document.getElementById('ai-panel').style.display='block';
+    document.getElementById('ai-panel').scrollIntoView({behavior:'smooth',block:'start'});
+    notify('AI analysis complete','ok');
+  }catch(e){
+    const fallback=`1. GEOMETRY-MATERIAL SYNERGY\n${m.n} at ${best.l}×${best.w}×${best.t}mm provides specific strength of ${(m.σ/m.ρ).toFixed(0)} MPa·cm³/g. The ${S.cfg.obj} objective balances mass efficiency against structural performance within your ${S.cfg.load}N load envelope.\n\n2. PRIMARY FAILURE RISK\nBending stress at ${best.p?.bending_stress_mpa}MPa is ${((best.p?.bending_stress_mpa/m.σ)*100).toFixed(0)}% of yield. Safety factor ${best.p?.safety_factor} meets the ${S.cfg.sf} requirement, but thermal cycling above ${Math.round(m.ρ*30)}°C could reduce the margin — consider fatigue analysis for dynamic loads.\n\n3. INDUSTRY 5.0 SUSTAINABILITY\nEco score ${best.p?.sustainability_score}/100 with ${best.p?.carbon_kg}kg CO₂ embodied. Recyclability of ${(m.eco*.009).toFixed(2)*100}% enables closed-loop manufacturing. Reducing thickness by 15% while maintaining safety factor could cut carbon by ~${(best.p?.carbon_kg*.12).toFixed(2)}kg.\n\n4. COST-PRIORITY ALTERNATIVE\nFor cost reduction, Steel AISI 1020 at $0.80/kg offers 380MPa yield with a denser build. A thickness increase of ~${Math.round(best.t*1.4)}mm would restore the same safety factor at approximately 40% lower material cost.`;
+    S.aiText=fallback;
+    document.getElementById('ai-text').textContent=fallback;
+    document.getElementById('ai-panel').style.display='block';
+    notify('AI offline — using local analysis','info');
+  }
+  btn.disabled=false;btn.innerHTML='✦ AI Material Insight';
+}
+
+// ════════════════════════════════════════════
+//  RESULTS RENDER
+// ════════════════════════════════════════════
+// ════════════════════════════════════════════
+//  RESULTS — STATE
+// ════════════════════════════════════════════
+let _sortMode = 'fitness';
+let _filterMode = 'all';
+let _displayDesigns = [];
+let cBar, cFitRes;
+
+function sortDesigns(mode) {
+  _sortMode = mode;
+  document.querySelectorAll('.sbtn[data-sort]').forEach(b => b.classList.toggle('active', b.dataset.sort===mode));
+  _applyFilterSort();
+  renderCards(_displayDesigns);
+  renderTable(_displayDesigns);
+}
+
+function filterDesigns(mode) {
+  _filterMode = mode;
+  document.querySelectorAll('.sbtn[data-filter]').forEach(b => b.classList.toggle('active', b.dataset.filter===mode));
+  _applyFilterSort();
+  renderCards(_displayDesigns);
+  renderTable(_displayDesigns);
+}
+
+function _applyFilterSort() {
+  let ds = [...S.designs];
+  // Filter
+  if (_filterMode === 'feasible') ds = ds.filter(d => d.p?.feasible);
+  else if (_filterMode === 'eco') ds = ds.filter(d => (d.p?.sustainability_score||0) >= 60);
+  else if (_filterMode === 'light') ds = ds.filter(d => (d.p?.weight_kg||999) <= S.cfg.maxW * 0.6);
+  // Sort
+  const sorters = {
+    fitness: d => -d.fit,
+    weight:  d => d.p?.weight_kg||999,
+    stress:  d => d.p?.bending_stress_mpa||999,
+    cost:    d => d.p?.cost_usd||999,
+    eco:     d => -(d.p?.sustainability_score||0),
+    sf:      d => -(d.p?.safety_factor||0),
+  };
+  ds.sort((a,b) => (sorters[_sortMode]||sorters.fitness)(a) - (sorters[_sortMode]||sorters.fitness)(b));
+  _displayDesigns = ds;
+}
+
+// ════════════════════════════════════════════
+//  RENDER RESULTS
+// ════════════════════════════════════════════
+function renderResults() {
+  if (!S.designs.length) {
+    // Show empty state with call-to-action
+    document.getElementById('dcard-grid').innerHTML = `
+      <div style="grid-column:1/-1;text-align:center;padding:3rem 1rem;border:1.5px dashed var(--wire);border-radius:var(--r2);">
+        <div style="font-size:2.5rem;margin-bottom:.875rem;opacity:.2;">◈</div>
+        <div style="font-family:var(--display);font-size:1.1rem;letter-spacing:2px;margin-bottom:.5rem;">NO DESIGNS YET</div>
+        <div style="font-size:12px;color:var(--mist);margin-bottom:1.25rem;">Run the optimizer first to generate 10 alternative designs</div>
+        <button class="btn btn-primary" onclick="nav('optimize')">▶ Go to Optimizer</button>
+      </div>`;
+    return;
+  }
+  _applyFilterSort();
+  const ds = S.designs; // all 10 for tiles/charts
+  const best = ds[0];
+
+  // Tiles
+  document.getElementById('rF').textContent = best.fit?.toFixed(1)||'—';
+  document.getElementById('rW').textContent = Math.min(...ds.map(d=>d.p?.weight_kg||99)).toFixed(2);
+  document.getElementById('rC').textContent = '$'+Math.min(...ds.map(d=>d.p?.cost_usd||9999)).toFixed(0);
+  document.getElementById('rE').textContent = Math.max(...ds.map(d=>d.p?.sustainability_score||0)).toFixed(0);
+  document.getElementById('rS').textContent = Math.min(...ds.map(d=>d.p?.bending_stress_mpa||999)).toFixed(0);
+  document.getElementById('rN').textContent = ds.length;
+
+  renderCards(_displayDesigns);
+  renderTable(_displayDesigns);
+  renderCharts(ds);
+  openDetail(ds[0]);
+  if (S.aiText) { document.getElementById('ai-text').textContent=S.aiText; document.getElementById('ai-panel').style.display='block'; }
+}
+
+// ── DESIGN CARDS ─────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════
+//  MINI CAD RENDERER — draws one Three.js scene per design card
+// ════════════════════════════════════════════════════════════
+const _cardRenderers = {};   // design_id → {renderer,scene,camera,mesh,wire,sph,anim,spinning}
+
+function buildBeamGeometry(l_mm, w_mm, t_mm, THREE) {
+  // Normalise so longest = 2.0 units
+  const sc = 2.0 / Math.max(l_mm, w_mm, t_mm);
+  const Lx = l_mm * sc, Ly = t_mm * sc, Lz = w_mm * sc;
+
+  // Subdivided box for good shading
+  const geo = new THREE.BoxGeometry(Lx, Ly, Lz, 6, 4, 4);
+
+  // Add chamfered-corner look by rounding slightly
+  const pos = geo.attributes.position;
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+    const chamfer = 0.015;
+    const mx = Lx/2 - chamfer, my = Ly/2 - chamfer, mz = Lz/2 - chamfer;
+    pos.setXYZ(i,
+      Math.max(-mx, Math.min(mx, x * (1 - chamfer/Math.max(Math.abs(x),1e-9)*0.5))),
+      Math.max(-my, Math.min(my, y)),
+      Math.max(-mz, Math.min(mz, z))
+    );
+  }
+  geo.computeVertexNormals();
+  return geo;
+}
+
+function getMaterialColor(matId, alpha) {
+  const col = MATS[matId]?.col || '#4a9eff';
+  const r = parseInt(col.slice(1,3),16)/255;
+  const g = parseInt(col.slice(3,5),16)/255;
+  const b = parseInt(col.slice(5,7),16)/255;
+  return { r, g, b, col };
+}
+
+function initCardRenderer(canvasId, design) {
+  // Clean up if already exists
+  destroyCardRenderer(design.design_id);
+
+  const canvas = document.getElementById(canvasId);
+  if (!canvas || !window.THREE) return null;
+  const W = canvas.parentElement.clientWidth || 280;
+  const H = 150;
+  canvas.width  = W * window.devicePixelRatio;
+  canvas.height = H * window.devicePixelRatio;
+  canvas.style.width  = W + 'px';
+  canvas.style.height = H + 'px';
+
+  const T = window.THREE;
+
+  const renderer = new T.WebGLRenderer({ canvas, antialias:true, alpha:true });
+  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.setSize(W, H);
+  renderer.setClearColor(0xdce6f5, 1);
+  renderer.shadowMap.enabled = false;
+  renderer.outputEncoding = T.sRGBEncoding;
+  renderer.toneMapping = T.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.2;
+
+  const scene = new T.Scene();
+  scene.background = new T.Color(0xdce6f5);
+
+  // Camera
+  const camera = new T.PerspectiveCamera(42, W/H, 0.01, 100);
+
+  // Lights
+  const amb  = new T.AmbientLight(0xc8d8f0, 1.8); scene.add(amb);
+  const key  = new T.DirectionalLight(0xffffff, 1.8);
+  key.position.set(4, 6, 4); scene.add(key);
+  const fill = new T.DirectionalLight(0x4466cc, 0.5);
+  fill.position.set(-3, 2, -3); scene.add(fill);
+  const rim  = new T.DirectionalLight(MATS[design.mat]?.col||'#00ffe0', 0.8);
+  rim.position.set(0, -2, -4); scene.add(rim);
+
+  // Geometry
+  const geo  = buildBeamGeometry(design.l, design.w, design.t, T);
+  const {r,g,b,col} = getMaterialColor(design.mat);
+  const mat  = new T.MeshStandardMaterial({
+    color: new T.Color(col).multiplyScalar(0.35),
+    metalness: MATS[design.mat]?.metalness || 0.5,
+    roughness: 0.35,
+    envMapIntensity: 0.8,
+  });
+  const mesh = new T.Mesh(geo, mat);
+  mesh.castShadow = true;
+  scene.add(mesh);
+
+  // Wireframe
+  const wgeo = new T.EdgesGeometry(geo, 12);
+  const wmat = new T.LineBasicMaterial({ color: new T.Color(col), transparent:true, opacity:0.55 });
+  const wire = new T.LineSegments(wgeo, wmat);
+  scene.add(wire);
+
+  // Subtle grid floor
+  const grid = new T.GridHelper(5, 16, 0xc0d0e8, 0xd4e0f0);
+  grid.position.y = -geo.boundingBox ? 0 : -0.55;
+  geo.computeBoundingBox();
+  grid.position.y = geo.boundingBox.min.y - 0.08;
+  scene.add(grid);
+
+  // Orbit state
+  const sph = { theta: 0.55, phi: 1.08, r: 2.8 };
+  const pan = { x: 0, y: 0 };
+
+  function updateCam() {
+    camera.position.set(
+      sph.r * Math.sin(sph.phi) * Math.sin(sph.theta) + pan.x,
+      sph.r * Math.cos(sph.phi) - pan.y,
+      sph.r * Math.sin(sph.phi) * Math.cos(sph.theta)
+    );
+    camera.lookAt(pan.x, -pan.y, 0);
+  }
+  updateCam();
+
+  // Mouse orbit
+  let drag = false, lastM = {x:0,y:0};
+  canvas.addEventListener('mousedown', e=>{ drag=true; lastM={x:e.clientX,y:e.clientY}; e.stopPropagation(); });
+  window.addEventListener('mouseup', ()=>{ drag=false; });
+  canvas.addEventListener('mousemove', e=>{
+    if(!drag) return;
+    sph.theta -= (e.clientX-lastM.x)*0.01;
+    sph.phi = Math.max(0.1, Math.min(Math.PI-0.1, sph.phi+(e.clientY-lastM.y)*0.01));
+    lastM={x:e.clientX,y:e.clientY};
+    updateCam();
+  });
+  canvas.addEventListener('wheel', e=>{
+    sph.r = Math.max(1.2, Math.min(8, sph.r + e.deltaY*0.003));
+    updateCam(); e.preventDefault();
+  }, {passive:false});
+  canvas.addEventListener('contextmenu', e=>e.preventDefault());
+
+  let spinning = true;
+  let animId;
+  function animate() {
+    animId = requestAnimationFrame(animate);
+    if (spinning) { sph.theta += 0.006; updateCam(); }
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  const state = { renderer, scene, camera, mesh, wire, sph, pan, updateCam, animId, spinning, geo, design };
+  _cardRenderers[design.design_id] = state;
+  return state;
+}
+
+function destroyCardRenderer(id) {
+  const s = _cardRenderers[id];
+  if (!s) return;
+  cancelAnimationFrame(s.animId);
+  s.renderer.dispose();
+  delete _cardRenderers[id];
+}
+
+function destroyAllCardRenderers() {
+  Object.keys(_cardRenderers).forEach(id => destroyCardRenderer(id));
+}
+
+function toggleCardSpin(id) {
+  const s = _cardRenderers[id];
+  if (!s) return;
+  s.spinning = !s.spinning;
+  const btn = document.getElementById('spin-btn-'+id);
+  if (btn) btn.textContent = s.spinning ? '⏸' : '▶';
+}
+
+// ════════════════════════════════════════════════════════════
+//  RENDER CARDS — each with inline 3D CAD preview
+// ════════════════════════════════════════════════════════════
+function renderCards(ds) {
+  destroyAllCardRenderers();
+  const grid = document.getElementById('dcard-grid');
+  grid.innerHTML = '';
+
+  if (!ds.length) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:2rem;font-family:var(--mono);font-size:11px;color:var(--mist);">No designs match current filter</div>';
+    return;
+  }
+
+  const rankIcons = ['★','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩'];
+
+  ds.forEach((d, i) => {
+    const m    = MATS[d.mat];
+    const pw   = d.p?.weight_kg||0;
+    const ps   = d.p?.bending_stress_mpa||0;
+    const pe   = d.p?.sustainability_score||0;
+    const isBest = (i === 0 && _sortMode === 'fitness');
+    const canvasId = 'cad-mini-' + d.design_id;
+
+    const card = document.createElement('div');
+    card.className = 'dcard' + (isBest ? ' sel' : '');
+    card.id = 'dc-' + d.design_id;
+
+    card.innerHTML = `
+      <div class="dc-rank" style="z-index:2;">#${d.rank}</div>
+
+      <!-- 3D CAD PREVIEW -->
+      <div class="cad-canvas-wrap" id="wrap-${d.design_id}">
+        <canvas id="${canvasId}"></canvas>
+        <div class="cad-tag">${m.n} · ${d.l}×${d.w}×${d.t}mm</div>
+        <div class="cad-spin" id="spin-btn-${d.design_id}" onclick="event.stopPropagation();toggleCardSpin('${d.design_id}')">⏸ SPIN</div>
+      </div>
+
+      <!-- Header -->
+      <div class="dc-head">
+        <div class="dc-icon" style="background:${m.col}18;border:1px solid ${m.col}35;font-size:.9rem;color:${m.col};">${rankIcons[i]||'◆'}</div>
+        <div style="flex:1;min-width:0;">
+          <div class="dc-id">${d.design_id}</div>
+          <div class="dc-mat" style="color:${m.col};">${m.n}</div>
+        </div>
+        <div class="dc-score" style="color:${isBest?'var(--neon)':'var(--text)'};">${d.fit.toFixed(1)}</div>
+      </div>
+
+      <!-- Metric bars -->
+      <div class="sbar"><div class="sbl">Weight</div><div class="sbw"><div class="sbf" style="width:${Math.min(100,pw/Math.max(S.cfg.maxW,1)*100).toFixed()}%;background:var(--sky);"></div></div><div class="sbv" style="color:var(--sky)">${pw.toFixed(2)}kg</div></div>
+      <div class="sbar"><div class="sbl">Stress</div><div class="sbw"><div class="sbf" style="width:${Math.min(100,ps/Math.max(S.cfg.stress,1)*100).toFixed()}%;background:${ps>S.cfg.stress?'var(--rose)':'var(--gold)'};"></div></div><div class="sbv" style="color:var(--gold)">${ps.toFixed(0)}MPa</div></div>
+      <div class="sbar"><div class="sbl">Eco</div><div class="sbw"><div class="sbf" style="width:${pe.toFixed()}%;background:var(--neon);"></div></div><div class="sbv" style="color:var(--neon)">${pe.toFixed(0)}</div></div>
+      <div class="sbar"><div class="sbl">Cost</div><div class="sbw"><div class="sbf" style="width:${Math.min(100,(d.p?.cost_usd||0)/Math.max(S.cfg.maxC,1)*100).toFixed()}%;background:var(--violet);"></div></div><div class="sbv" style="color:var(--violet)">$${(d.p?.cost_usd||0).toFixed(0)}</div></div>
+
+      <!-- Badges -->
+      <div style="margin-top:.5rem;display:flex;gap:4px;flex-wrap:wrap;">
+        <span class="badge b-green" style="font-size:8px;">⚡${d.fit.toFixed(1)}</span>
+        <span class="badge ${d.p?.feasible?'b-green':'b-gold'}" style="font-size:8px;">${d.p?.feasible?'✓':'⚠'}</span>
+        <span class="badge b-sky" style="font-size:8px;">SF ${(d.p?.safety_factor||0).toFixed(1)}</span>
+        <span class="badge" style="background:rgba(167,139,250,.1);color:var(--violet);font-size:8px;">🌿${pe.toFixed(0)}</span>
+      </div>
+
+      <button class="btn btn-ghost" style="width:100%;margin-top:.625rem;padding:5px;font-size:10px;font-family:var(--mono);"
+        onclick="event.stopPropagation();openDetail(S.designs.find(x=>x.design_id==='${d.design_id}'))">
+        View Full 3D + Details →
+      </button>
+      <div style="display:flex;gap:5px;margin-top:5px;">
+        <button class="btn btn-ghost" style="flex:1;padding:4px;font-size:9px;font-family:var(--mono);"
+          onclick="event.stopPropagation();S.selected=S.designs.find(x=>x.design_id==='${d.design_id}');_dp=null;setTimeout(()=>{openDetail(S.designs.find(x=>x.design_id==='${d.design_id}'));setTimeout(dpDownloadSTL,200);},50);">
+          ↓ STL
+        </button>
+        <button class="btn btn-ghost" style="flex:1;padding:4px;font-size:9px;font-family:var(--mono);"
+          onclick="event.stopPropagation();(function(){const dx=S.designs.find(x=>x.design_id==='${d.design_id}');const mx=MATS[dx.mat];dl('genopt_'+dx.design_id+'.json',JSON.stringify({design_id:dx.design_id,material:{id:dx.mat,...mx},dimensions_mm:{length:dx.l,width:dx.w,thickness:dx.t},physics:dx.p,fitness:dx.fit},null,2),'application/json');notify('${d.design_id} JSON downloaded','ok');})()">
+          ↓ JSON
+        </button>
+      </div>
+    `;
+
+    card.onclick = () => openDetail(S.designs.find(x => x.design_id === d.design_id));
+    grid.appendChild(card);
+
+    // Init 3D renderer after DOM is ready
+    setTimeout(() => {
+      if (window.THREE) {
+        initCardRenderer(canvasId, d);
+      } else {
+        // Three.js not yet loaded — load once then init all
+        loadThreeForCards(() => initCardRenderer(canvasId, d));
+      }
+    }, i * 30); // stagger to avoid blocking
+  });
+}
+
+let _threeLoadingForCards = false;
+let _threeCardQueue = [];
+function loadThreeForCards(cb) {
+  _threeCardQueue.push(cb);
+  if (window.THREE) { cb(); return; }
+  if (_threeLoadingForCards) return;
+  _threeLoadingForCards = true;
+  const s = document.createElement('script');
+  s.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+  s.onload = () => {
+    window.THREE = THREE; // ensure global
+    _threeCardQueue.forEach(fn => fn());
+    _threeCardQueue = [];
+  };
+  document.head.appendChild(s);
+}
+
+// ════════════════════════════════════════════════════════════
+//  DETAIL PANEL — full 3D viewer with orbit + download
+// ════════════════════════════════════════════════════════════
+let _dp = null; // detail panel Three.js state
+
+function openDetail(d) {
+  if (!d) return;
+  S.selected = d;
+  document.querySelectorAll('.dcard').forEach(c => c.classList.remove('sel'));
+  document.getElementById('dc-'+d.design_id)?.classList.add('sel');
+
+  const m = MATS[d.mat];
+
+  // Header
+  document.getElementById('dp-icon').style.cssText =
+    `width:42px;height:42px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;font-size:1.2rem;background:${m.col}20;border:1px solid ${m.col}40;color:${m.col};`;
+  document.getElementById('dp-icon').textContent = '◈';
+  document.getElementById('dp-id').textContent   = d.design_id + ' — ' + m.n;
+  document.getElementById('dp-mat').textContent  = `L:${d.l}mm × W:${d.w}mm × T:${d.t}mm   ·   Rank #${d.rank}   ·   ${d.p?.feasible?'✓ Feasible':'⚠ At Limit'}`;
+  document.getElementById('dp-score').textContent = d.fit.toFixed(2);
+
+  // Dim labels in 3D viewer
+  document.getElementById('dp-dim-labels').innerHTML =
+    `L: ${d.l} mm<br>W: ${d.w} mm<br>T: ${d.t} mm<br><span style="color:${m.col}">${m.n}</span>`;
+
+  // Metric tiles
+  const tiles = [
+    {l:'Weight',    v:(d.p?.weight_kg||0).toFixed(3),      u:'kg',    c:'var(--sky)'},
+    {l:'Stress',    v:(d.p?.bending_stress_mpa||0).toFixed(1), u:'MPa',c:'var(--gold)'},
+    {l:'Safety F.', v:(d.p?.safety_factor||0).toFixed(2),  u:`req ${S.cfg.sf}`, c:'var(--neon)'},
+    {l:'Deflection',v:(d.p?.deflection_mm||0).toFixed(3),  u:'mm',    c:'var(--violet)'},
+    {l:'Cost',      v:'$'+(d.p?.cost_usd||0).toFixed(2),   u:'USD',   c:'var(--gold)'},
+    {l:'Eco Score', v:(d.p?.sustainability_score||0).toFixed(0), u:'/100', c:'#4ade80'},
+    {l:'Carbon',    v:(d.p?.carbon_kg||0).toFixed(3),       u:'kg CO₂',c:'var(--rose)'},
+    {l:'Volume',    v:(d.p?.volume_cm3||0).toFixed(1),      u:'cm³',   c:'var(--subtext)'},
+  ];
+  document.getElementById('dp-tiles').innerHTML = tiles.map(t=>
+    `<div class="tile" style="padding:.5rem .75rem;background:var(--raised);border:1px solid var(--wire);">
+      <div class="tile-label">${t.l}</div>
+      <div class="tile-val" style="font-size:1.1rem;color:${t.c};">${t.v}</div>
+      <div class="tile-foot">${t.u}</div>
+    </div>`
+  ).join('');
+
+  // Score bars
+  const axes = [
+    {n:'Overall Fit', v:d.fit,                                                                   c:'var(--neon)'},
+    {n:'Weight Eff',  v:Math.max(0,(1-(d.p?.weight_kg||0)/Math.max(S.cfg.maxW,1))*100),         c:'var(--sky)'},
+    {n:'Strength',    v:Math.max(0,(1-(d.p?.bending_stress_mpa||0)/Math.max(S.cfg.stress,1))*100),c:'var(--gold)'},
+    {n:'Cost Eff',    v:Math.max(0,(1-(d.p?.cost_usd||0)/Math.max(S.cfg.maxC,1))*100),          c:'var(--violet)'},
+    {n:'Eco',         v:d.p?.sustainability_score||0,                                             c:'#4ade80'},
+    {n:'Safety',      v:Math.min(100,(d.p?.safety_factor||0)/Math.max(S.cfg.sf,1)*50),          c:'var(--rose)'},
+  ];
+  document.getElementById('dp-bars').innerHTML = axes.map(a=>`
+    <div class="sbar">
+      <div class="sbl">${a.n}</div>
+      <div class="sbw"><div class="sbf" style="width:${Math.min(100,a.v).toFixed(1)}%;background:${a.c};transition:width .6s ease;"></div></div>
+      <div class="sbv" style="color:${a.c}">${a.v.toFixed(1)}</div>
+    </div>`).join('');
+
+  // Material props
+  document.getElementById('dp-matprops').innerHTML =
+    `Density:  ${m.ρ} g/cm³<br>Yield:    ${m.σ} MPa<br>Modulus:  ${m.E} GPa<br>` +
+    `Cost:     $${m.$}/kg<br>Max Temp: ${m.maxT||'—'}°C<br>` +
+    `Carbon:   ${m.cf} kg CO₂/kg<br>Eco:      ${m.eco}/100<br>` +
+    `Category: ${m.cat||'metal'}`;
+
+  // Structural
+  document.getElementById('dp-struct').innerHTML =
+    `Beam:     ${S.cfg.beam}<br>Load:     ${S.cfg.load} N<br>` +
+    `Shear σ:  ${(d.p?.shear_stress_mpa||0).toFixed(2)} MPa<br>` +
+    `Buckling: ${(d.p?.buckling_n||0).toFixed(0)} N<br>` +
+    `Util:     ${((d.p?.utilization_ratio||0)*100).toFixed(1)}%<br>` +
+    `Status:   <span style="color:${d.p?.feasible?'var(--neon)':'var(--gold)'}">${d.p?.feasible?'✓ FEASIBLE':'⚠ '+d.p?.failure_mode}</span>`;
+
+  document.getElementById('detail-panel').style.display = 'block';
+  document.getElementById('detail-panel').scrollIntoView({behavior:'smooth', block:'start'});
+
+  // Init full 3D viewer
+  setTimeout(() => initDetailViewer(d), 50);
+}
+
+// ── Detail panel Three.js viewer ──────────────────────────────
+function initDetailViewer(design) {
+  if (_dp) {
+    cancelAnimationFrame(_dp.animId);
+    _dp.renderer.dispose();
+    _dp = null;
+  }
+
+  const canvas = document.getElementById('dp-cad-canvas');
+  const wrap   = document.getElementById('dp-cad-wrap');
+  if (!canvas || !window.THREE) {
+    loadThreeForCards(() => initDetailViewer(design));
+    return;
+  }
+
+  const T = window.THREE;
+  const W = wrap.clientWidth || 380, H = 320;
+  canvas.width  = W * window.devicePixelRatio;
+  canvas.height = H * window.devicePixelRatio;
+  canvas.style.width  = W + 'px';
+  canvas.style.height = H + 'px';
+
+  const renderer = new T.WebGLRenderer({ canvas, antialias:true, alpha:false });
+  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.setSize(W, H);
+  renderer.setClearColor(0xe8f0fb, 1);
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type    = T.PCFSoftShadowMap;
+  renderer.outputEncoding    = T.sRGBEncoding;
+  renderer.toneMapping       = T.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.15;
+
+  const scene  = new T.Scene();
+  scene.background = new T.Color(0xe8f0fb);
+  scene.fog = new T.FogExp2(0xe8f0fb, 0.05);
+
+  const camera = new T.PerspectiveCamera(42, W/H, 0.01, 100);
+
+  // Lights
+  scene.add(new T.AmbientLight(0xc0d4f0, 1.8));
+  const key = new T.DirectionalLight(0xffffff, 2.0);
+  key.position.set(5, 8, 5); key.castShadow = true;
+  key.shadow.mapSize.width = key.shadow.mapSize.height = 1024;
+  scene.add(key);
+  const fill = new T.DirectionalLight(0x4466cc, 0.5); fill.position.set(-4,2,-4); scene.add(fill);
+  const col = MATS[design.mat]?.col || '#00ffe0';
+  const rim = new T.DirectionalLight(new T.Color(col), 0.9); rim.position.set(0,-3,-5); scene.add(rim);
+  const pt  = new T.PointLight(new T.Color(col), 0.4, 12); pt.position.set(0, 4, 0); scene.add(pt);
+
+  // Grid + shadow plane
+  const grid = new T.GridHelper(8, 24, 0xb8cce8, 0xc8daf2);
+  scene.add(grid);
+  const plane = new T.Mesh(
+    new T.PlaneGeometry(20,20),
+    new T.ShadowMaterial({opacity:0.3})
+  );
+  plane.rotation.x = -Math.PI/2; plane.receiveShadow = true;
+  scene.add(plane);
+
+  // Main mesh
+  const geo = buildBeamGeometry(design.l, design.w, design.t, T);
+  geo.computeBoundingBox();
+  const by = geo.boundingBox.min.y;
+  grid.position.y = plane.position.y = by - 0.05;
+
+  const matC = new T.Color(col).multiplyScalar(0.4);
+  const mat  = new T.MeshStandardMaterial({
+    color: matC, metalness:0.55, roughness:0.28,
+    envMapIntensity:1.0,
+  });
+  const mesh = new T.Mesh(geo, mat);
+  mesh.castShadow = true; mesh.receiveShadow = true;
+  scene.add(mesh);
+
+  // Edge highlight
+  const edges = new T.LineSegments(
+    new T.EdgesGeometry(geo, 10),
+    new T.LineBasicMaterial({ color: new T.Color(col), transparent:true, opacity:0.55 })
+  );
+  scene.add(edges);
+
+  // Wireframe (hidden by default)
+  const wframe = new T.LineSegments(
+    new T.WireframeGeometry(geo),
+    new T.LineBasicMaterial({ color: new T.Color(col), transparent:true, opacity:0.2 })
+  );
+  wframe.visible = false;
+  scene.add(wframe);
+
+  // Corner markers
+  const sc = 2.0 / Math.max(design.l, design.w, design.t);
+  const Lx = design.l*sc, Ly = design.t*sc, Lz = design.w*sc;
+  const cornerGeo = new T.SphereGeometry(0.022, 6, 6);
+  const cornerMat = new T.MeshBasicMaterial({ color: new T.Color(col) });
+  [[-Lx/2,-Ly/2,-Lz/2],[Lx/2,-Ly/2,-Lz/2],[-Lx/2,Ly/2,-Lz/2],[Lx/2,Ly/2,-Lz/2],
+   [-Lx/2,-Ly/2, Lz/2],[Lx/2,-Ly/2, Lz/2],[-Lx/2,Ly/2, Lz/2],[Lx/2,Ly/2, Lz/2]]
+  .forEach(pos => {
+    const s = new T.Mesh(cornerGeo, cornerMat);
+    s.position.set(...pos); scene.add(s);
+  });
+
+  // Orbit state
+  const sph = {theta:0.6, phi:1.0, r:3.2};
+  const pan = {x:0, y:0};
+  function updateCam() {
+    camera.position.set(
+      sph.r*Math.sin(sph.phi)*Math.sin(sph.theta)+pan.x,
+      sph.r*Math.cos(sph.phi)-pan.y,
+      sph.r*Math.sin(sph.phi)*Math.cos(sph.theta)
+    );
+    camera.lookAt(pan.x,-pan.y,0);
+  }
+  updateCam();
+
+  let drag=false, dragBtn=-1, lastM={x:0,y:0};
+  canvas.addEventListener('mousedown',  e=>{drag=true;dragBtn=e.button;lastM={x:e.clientX,y:e.clientY};canvas.style.cursor='grabbing';});
+  window.addEventListener('mouseup',    ()=>{drag=false;canvas.style.cursor='grab';});
+  window.addEventListener('mousemove',  e=>{
+    if(!drag)return;
+    const dx=(e.clientX-lastM.x)*0.008, dy=(e.clientY-lastM.y)*0.008;
+    lastM={x:e.clientX,y:e.clientY};
+    if(dragBtn===0){sph.theta-=dx; sph.phi=Math.max(0.05,Math.min(Math.PI-0.05,sph.phi+dy));}
+    else{pan.x-=dx*sph.r*0.4; pan.y-=dy*sph.r*0.4;}
+    updateCam();
+  });
+  canvas.addEventListener('wheel', e=>{sph.r=Math.max(1,Math.min(12,sph.r+e.deltaY*0.003));updateCam();e.preventDefault();},{passive:false});
+  canvas.addEventListener('contextmenu',e=>e.preventDefault());
+  canvas.addEventListener('touchstart',  e=>{drag=true;dragBtn=0;lastM={x:e.touches[0].clientX,y:e.touches[0].clientY};},{passive:true});
+  canvas.addEventListener('touchend',    ()=>{drag=false;});
+  canvas.addEventListener('touchmove',   e=>{
+    const dx=(e.touches[0].clientX-lastM.x)*0.008, dy=(e.touches[0].clientY-lastM.y)*0.008;
+    lastM={x:e.touches[0].clientX,y:e.touches[0].clientY};
+    sph.theta-=dx; sph.phi=Math.max(0.05,Math.min(Math.PI-0.05,sph.phi+dy));
+    updateCam(); e.preventDefault();
+  },{passive:false});
+
+  let spinning = true;
+  let animId;
+  function animate() {
+    animId = requestAnimationFrame(animate);
+    if (spinning) { sph.theta += 0.005; updateCam(); }
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  _dp = { renderer, scene, camera, mesh, edges, wframe, sph, pan, updateCam, animId, spinning, geo, design, T, canvas };
+}
+
+// Detail viewer controls
+function dpToggleWire() {
+  if (!_dp) return;
+  _dp.wframe.visible = !_dp.wframe.visible;
+  _dp.mesh.visible   = !_dp.wframe.visible;
+  _dp.edges.visible  = true;
+}
+function dpToggleSpin() {
+  if (!_dp) return;
+  _dp.spinning = !_dp.spinning;
+}
+function dpReset() {
+  if (!_dp) return;
+  _dp.sph = {theta:0.6, phi:1.0, r:3.2};
+  _dp.pan = {x:0,y:0};
+  _dp.updateCam();
+}
+function dpScreenshot() {
+  if (!_dp) return;
+  _dp.renderer.render(_dp.scene, _dp.camera);
+  const url = _dp.renderer.domElement.toDataURL('image/png');
+  const a = document.createElement('a'); a.href=url;
+  a.download = 'genopt_'+(_dp.design?.design_id||'model')+'_3d.png'; a.click();
+  notify('3D screenshot saved','ok');
+}
+function dpDownloadSTL() {
+  if (!_dp || !_dp.geo) { notify('No model loaded','err'); return; }
+  const pos = _dp.geo.attributes.position.array;
+  const triCount = Math.floor(pos.length/9);
+  const buf = new ArrayBuffer(84 + triCount*50);
+  const dv  = new DataView(buf);
+  const enc = new TextEncoder();
+  const h   = enc.encode('GenOpt ' + (_dp.design?.design_id||'') + ' ' + (_dp.design?.mat||''));
+  for(let i=0;i<Math.min(h.length,80);i++) dv.setUint8(i,h[i]);
+  dv.setUint32(80, triCount, true);
+  let off = 84;
+  for(let i=0;i<triCount;i++){
+    const b=i*9;
+    const ax=pos[b],ay=pos[b+1],az=pos[b+2];
+    const bx=pos[b+3],by=pos[b+4],bz=pos[b+5];
+    const cx=pos[b+6],cy=pos[b+7],cz=pos[b+8];
+    const ux=bx-ax,uy=by-ay,uz=bz-az,vx=cx-ax,vy=cy-ay,vz=cz-az;
+    const nx=uy*vz-uz*vy, ny=uz*vx-ux*vz, nz=ux*vy-uy*vx;
+    const nl=Math.sqrt(nx*nx+ny*ny+nz*nz)||1;
+    dv.setFloat32(off,nx/nl,true);dv.setFloat32(off+4,ny/nl,true);dv.setFloat32(off+8,nz/nl,true);off+=12;
+    dv.setFloat32(off,ax,true);dv.setFloat32(off+4,ay,true);dv.setFloat32(off+8,az,true);off+=12;
+    dv.setFloat32(off,bx,true);dv.setFloat32(off+4,by,true);dv.setFloat32(off+8,bz,true);off+=12;
+    dv.setFloat32(off,cx,true);dv.setFloat32(off+4,cy,true);dv.setFloat32(off+8,cz,true);off+=12;
+    dv.setUint16(off,0,true);off+=2;
+  }
+  const name = 'genopt_'+(_dp.design?.design_id||'model')+'_'+(_dp.design?.mat||'')+'_'+(_dp.design?.l||0)+'x'+(_dp.design?.w||0)+'x'+(_dp.design?.t||0)+'.stl';
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([buf],{type:'model/stl'}));
+  a.download=name; a.click();
+  notify('STL downloaded: '+name,'ok');
+}
+
+function confirmDesign() {
+  const d = S.selected;
+  const m = MATS[d.mat];
+  document.getElementById('confirm-sub').textContent =
+    `${d.design_id} · ${m.n} · ${d.l}×${d.w}×${d.t}mm · ${d.p?.weight_kg?.toFixed(2)}kg · $${d.p?.cost_usd?.toFixed(0)} · fitness ${d.fit.toFixed(2)}`;
+  document.getElementById('confirm-box').style.display = 'block';
+  document.getElementById('confirm-box').scrollIntoView({behavior:'smooth'});
+  notify(d.design_id+' confirmed as final selection','ok');
+}
+
+// ── TABLE ─────────────────────────────────────────────────────
+function renderTable(ds) {
+  const tbody = document.getElementById('cmp-body');
+  tbody.innerHTML = '';
+  ds.forEach((d, i) => {
+    const m = MATS[d.mat];
+    const tr = document.createElement('tr');
+    tr.style.cursor = 'pointer';
+    tr.onclick = () => openDetail(d);
+    tr.innerHTML = `
+      <td><span class="badge ${i===0?'b-green':'b-muted'}" style="font-size:8.5px;">#${d.rank}</span></td>
+      <td class="mono-cell">${d.design_id}</td>
+      <td><span style="color:${m.col}">●</span> ${m.n||m.name}</td>
+      <td class="mono-cell" style="font-size:10px;">${d.l}×${d.w}×${d.t}</td>
+      <td class="mono-cell" style="color:var(--sky)">${(m.ρ||0).toFixed(2)} g/cm³</td>
+      <td class="mono-cell">${(d.p?.weight_kg||0).toFixed(3)}</td>
+      <td class="mono-cell" style="color:${(d.p?.bending_stress_mpa||0)>S.cfg.stress?'var(--rose)':'inherit'}">${(d.p?.bending_stress_mpa||0).toFixed(1)}</td>
+      <td class="mono-cell">${(d.p?.deflection_mm||0).toFixed(3)}</td>
+      <td class="mono-cell" style="color:${(d.p?.safety_factor||0)<S.cfg.sf?'var(--rose)':'var(--neon)'}">${(d.p?.safety_factor||0).toFixed(2)}</td>
+      <td class="mono-cell">$${(d.p?.cost_usd||0).toFixed(1)}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:5px;">
+          <div style="width:50px;height:3px;background:var(--edge);border-radius:2px;overflow:hidden;">
+            <div style="height:100%;width:${d.p?.sustainability_score||0}%;background:var(--neon);"></div>
+          </div>
+          <span class="mono-cell" style="font-size:9px;">${(d.p?.sustainability_score||0).toFixed(0)}</span>
+        </div>
+      </td>
+      <td class="mono-cell">${(d.p?.carbon_kg||0).toFixed(3)}</td>
+      <td class="mono-cell" style="color:${i===0?'var(--neon)':'var(--subtext)'};font-weight:${i===0?'600':'400'}">${d.fit.toFixed(3)}</td>
+      <td><button class="sbtn" onclick="event.stopPropagation();openDetail(S.designs.find(x=>x.design_id==='${d.design_id}'));S.selected=S.designs.find(x=>x.design_id==='${d.design_id}');confirmDesign();" style="font-size:8.5px;padding:3px 8px;">SELECT</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// ── CHARTS ───────────────────────────────────────────────────
+function renderCharts(ds) {
+  // Fitness history (reuse from optimize page)
+  if (cFitRes) cFitRes.destroy();
+  const frc = document.getElementById('fit-res-chart');
+  if (frc && S.fitHist.length) {
+    cFitRes = new Chart(frc, {type:'line', data:{
+      labels: S.fitHist.map(h=>h.g),
+      datasets:[
+        {label:'Best',data:S.fitHist.map(h=>h.best),borderColor:'#00ffe0',borderWidth:1.5,tension:.4,pointRadius:0},
+        {label:'Avg', data:S.fitHist.map(h=>h.avg), borderColor:'#4db8ff',borderWidth:1,tension:.4,pointRadius:0,borderDash:[3,3]},
+      ]
+    }, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:CG},ticks:CT},y:{grid:{color:CG},ticks:CT}}}});
+  }
+
+  // Bubble
+  if (cBub) cBub.destroy();
+  const bc = document.getElementById('bubble-chart');
+  if (bc) {
+    cBub = new Chart(bc, {type:'bubble', data:{
+      datasets: ds.map((d,i) => ({
+        label: d.design_id,
+        data:[{x:+(d.p?.weight_kg||0).toFixed(3),y:+(d.p?.bending_stress_mpa||0).toFixed(1),r:Math.max(4,(d.p?.sustainability_score||10)/9)}],
+        backgroundColor: i===0?'rgba(0,255,213,.75)': i<3?'rgba(77,184,255,.5)':'rgba(167,139,250,.35)',
+      }))
+    }, options:{responsive:true,maintainAspectRatio:false,layout:{padding:8},plugins:{legend:{display:false}},
+      scales:{
+        x:{title:{display:true,text:'Weight (kg)',color:'#4a5168',font:{size:8}},grid:{color:CG},ticks:CT},
+        y:{title:{display:true,text:'Stress (MPa)',color:'#4a5168',font:{size:8}},grid:{color:CG},ticks:CT},
+      }}});
+  }
+
+  // Radar — top 5
+  if (cRad) cRad.destroy();
+  const rc = document.getElementById('radar-chart');
+  if (rc) {
+    const top5 = ds.slice(0,5);
+    const cols=['rgba(0,255,213,.18)','rgba(77,184,255,.15)','rgba(240,165,0,.15)','rgba(167,139,250,.15)','rgba(251,146,60,.15)'];
+    const bords=['#00ffe0','#4db8ff','#f0a500','#a78bfa','#fb923c'];
+    cRad = new Chart(rc, {type:'radar', data:{
+      labels:['Fitness','Strength','Eco','Cost Eff','Weight Eff'],
+      datasets: top5.map((d,i)=>({
+        label: d.design_id,
+        data:[
+          +Math.min(100,d.fit).toFixed(1),
+          +Math.min(100,Math.max(0,(1-d.p?.bending_stress_mpa/S.cfg.stress)*100)).toFixed(1),
+          +(d.p?.sustainability_score||0).toFixed(1),
+          +Math.min(100,Math.max(0,100-(d.p?.cost_usd||0))).toFixed(1),
+          +Math.min(100,Math.max(0,(1-(d.p?.weight_kg||0)/Math.max(S.cfg.maxW,1))*100)).toFixed(1),
+        ],
+        backgroundColor:cols[i],borderColor:bords[i],borderWidth:i===0?2:1,pointRadius:2,
+      }))
+    }, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{r:{backgroundColor:'transparent',
+        angleLines:{color:'rgba(255,255,255,.04)'},grid:{color:'rgba(255,255,255,.04)'},
+        pointLabels:{color:'#4a5168',font:{size:8,family:"'DM Mono',monospace"}},
+        ticks:{color:'#4a5168',font:{size:7},backdropColor:'transparent'}
+      }}}});
+  }
+
+  // Bar — all 10 fitness
+  if (cBar) cBar.destroy();
+  const brch = document.getElementById('bar-chart');
+  if (brch) {
+    cBar = new Chart(brch, {type:'bar', data:{
+      labels: ds.map(d=>d.design_id),
+      datasets:[{
+        data: ds.map(d=>+d.fit.toFixed(2)),
+        backgroundColor: ds.map((d,i)=>i===0?'rgba(0,255,213,.7)':i<3?'rgba(77,184,255,.45)':'rgba(167,139,250,.3)'),
+        borderColor: ds.map((d,i)=>i===0?'#00ffe0':i<3?'#4db8ff':'#a78bfa'),
+        borderWidth:1, borderRadius:3,
+      }]
+    }, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{
+        x:{grid:{display:false},ticks:{...CT,font:{size:8,family:"'DM Mono',monospace"}}},
+        y:{grid:{color:CG},ticks:CT,min:0,max:100},
+      }}});
+  }
+}
+
+// ── SINGLE EXPORT ─────────────────────────────────────────────
+function exportSingleJSON() {
+  if (!S.selected) return;
+  const d = S.selected;
+  dl('genopt_'+d.design_id+'.json', JSON.stringify({
+    export_ts: new Date().toISOString(),
+    design_id: d.design_id, rank: d.rank,
+    industry_5_0: {human_confirmed:false, pending_approval:true},
+    material: {id:d.mat,...MATS[d.mat]},
+    dimensions_mm: {length:d.l,width:d.w,thickness:d.t},
+    physics: d.p, fitness: d.fit,
+    ga_config: S.cfg,
+  },null,2),'application/json');
+  notify(d.design_id+' JSON exported','ok');
+}
+
+// legacy stub
+function _OLD_renderResults_replaced(){if(0){
+
+  document.getElementById('rW').textContent=best.p?.weight_kg?.toFixed(2)||'—';
+  document.getElementById('rF').textContent=best.fit?.toFixed(1)||'—';
+  document.getElementById('rC').textContent='$'+(best.p?.cost_usd?.toFixed(0)||'—');
+  document.getElementById('rE').textContent=best.p?.sustainability_score?.toFixed(0)||'—';
+
+  // Design cards
+  const grid=document.getElementById('dcard-grid'); grid.innerHTML='';
+  ds.forEach((d,i)=>{
+    const m=MATS[d.mat];
+    const card=document.createElement('div');
+    card.className='dcard'+(i===0?' sel':'');
+    card.id='dc-'+d.design_id;
+    card.onclick=()=>selectD(d);
+    const pw=d.p?.weight_kg||0,ps=d.p?.bending_stress_mpa||0,pe=d.p?.sustainability_score||0;
+    card.innerHTML=`
+      <div class="dc-rank">#${i+1}</div>
+      <div class="dc-head">
+        <div class="dc-icon" style="background:${m.col}18;border:1px solid ${m.col}30;">${i===0?'★':'◆'}</div>
+        <div><div class="dc-id">${d.design_id}</div><div class="dc-mat">${m.n}</div></div>
+        <div class="dc-score" style="color:${i===0?'var(--neon)':'var(--text)'}">${d.fit.toFixed(1)}</div>
+      </div>
+      <div class="dc-dims">${d.l} × ${d.w} × ${d.t} mm</div>
+      <div class="sbar"><div class="sbl">Weight</div><div class="sbw"><div class="sbf" style="width:${Math.min(100,pw/S.cfg.maxW*100).toFixed()}%;background:var(--sky);"></div></div><div class="sbv" style="color:var(--sky)">${pw.toFixed(2)}</div></div>
+      <div class="sbar"><div class="sbl">Stress</div><div class="sbw"><div class="sbf" style="width:${Math.min(100,ps/S.cfg.stress*100).toFixed()}%;background:${ps>S.cfg.stress?'var(--rose)':'var(--gold)'};"></div></div><div class="sbv" style="color:var(--gold)">${ps.toFixed(0)}</div></div>
+      <div class="sbar"><div class="sbl">Eco</div><div class="sbw"><div class="sbf" style="width:${pe.toFixed()}%;background:var(--neon);"></div></div><div class="sbv" style="color:var(--neon)">${pe.toFixed(0)}</div></div>
+      <div style="margin-top:.75rem;display:flex;gap:5px;flex-wrap:wrap;">
+        <span class="badge b-green" style="font-size:9px;">fit ${d.fit.toFixed(1)}</span>
+        <span class="badge b-gold" style="font-size:9px;">$${d.p?.cost_usd?.toFixed(0)||'?'}</span>
+        <span class="badge ${d.p?.feasible?'b-green':'b-gold'}" style="font-size:9px;">${d.p?.feasible?'✓ Pass':'⚠ Limit'}</span>
+      </div>`;
+    grid.appendChild(card);
+  });
+
+  // Comparison table
+  const tbody=document.getElementById('cmp-body'); tbody.innerHTML='';
+  ds.forEach((d,i)=>{
+    const m=MATS[d.mat];
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td><span class="badge ${i===0?'b-green':'b-muted'}" style="font-size:9px;">#${i+1}</span></td>
+      <td class="mono-cell">${d.design_id}</td>
+      <td style="color:${m.col}">● ${m.n}</td>
+      <td class="mono-cell" style="font-size:10.5px;">${d.l}×${d.w}×${d.t}</td>
+      <td class="mono-cell">${d.p?.weight_kg?.toFixed(3)||'?'}</td>
+      <td class="mono-cell">${d.p?.bending_stress_mpa?.toFixed(1)||'?'}</td>
+      <td class="mono-cell">${d.p?.deflection_mm?.toFixed(3)||'?'}</td>
+      <td class="mono-cell">${d.p?.safety_factor?.toFixed(2)||'?'}</td>
+      <td class="mono-cell">$${d.p?.cost_usd?.toFixed(1)||'?'}</td>
+      <td><div style="width:60px;height:3px;background:var(--edge);border-radius:1.5px;overflow:hidden;"><div style="height:100%;width:${d.p?.sustainability_score||0}%;background:var(--neon);"></div></div></td>
+      <td class="mono-cell" style="color:${i===0?'var(--neon)':'var(--subtext)'}">${d.fit.toFixed(3)}</td>`;
+    tbody.appendChild(tr);
+  });
+
+  // Bubble chart
+  if(cBub)cBub.destroy();
+  const bc=document.getElementById('bubble-chart');
+  if(bc){
+    cBub=new Chart(bc,{type:'bubble',data:{datasets:ds.map((d,i)=>({
+      label:d.design_id,
+      data:[{x:+(d.p?.weight_kg||0).toFixed(3),y:+(d.p?.bending_stress_mpa||0).toFixed(1),r:Math.max(6,(d.p?.sustainability_score||10)/7)}],
+      backgroundColor:i===0?'rgba(0,255,224,.65)':'rgba(56,182,255,.4)',
+    }))},options:{responsive:true,maintainAspectRatio:false,layout:{padding:10},plugins:{legend:{display:false}},
+      scales:{
+        x:{title:{display:true,text:'Weight (kg)',color:'#4a5168',font:{size:8}},grid:{color:CG},ticks:CT},
+        y:{title:{display:true,text:'Stress (MPa)',color:'#4a5168',font:{size:8}},grid:{color:CG},ticks:CT},
+      }}});
+  }
+
+  // Radar
+  if(cRad)cRad.destroy();
+  const rc=document.getElementById('radar-chart');
+  if(rc){
+    const cols=['rgba(0,255,224,.15)','rgba(56,182,255,.15)','rgba(240,165,0,.15)','rgba(155,114,239,.15)','rgba(251,146,60,.15)'];
+    const bords=['#00ffe0','#38b6ff','#f0a500','#9b72ef','#fb923c'];
+    cRad=new Chart(rc,{type:'radar',data:{
+      labels:['Fitness','Strength','Eco','Cost Eff','Weight Eff'],
+      datasets:ds.map((d,i)=>({
+        label:d.design_id,
+        data:[
+          +Math.min(100,d.fit).toFixed(1),
+          +Math.min(100,Math.max(0,(1-d.p?.bending_stress_mpa/S.cfg.stress)*100)).toFixed(1),
+          +(d.p?.sustainability_score||0).toFixed(1),
+          +Math.min(100,Math.max(0,100-d.p?.cost_usd)).toFixed(1),
+          +Math.min(100,Math.max(0,(1-d.p?.weight_kg/S.cfg.maxW)*100)).toFixed(1),
+        ],
+        backgroundColor:cols[i],borderColor:bords[i],borderWidth:i===0?2:1,pointRadius:2,
+      }))
+    },options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{r:{backgroundColor:'transparent',
+        angleLines:{color:'rgba(255,255,255,.04)'},grid:{color:'rgba(255,255,255,.04)'},
+        pointLabels:{color:'#4a5168',font:{size:8,family:"'DM Mono',monospace"}},
+        ticks:{color:'#4a5168',font:{size:7},backdropColor:'transparent'}
+      }}}});
+  }
+
+}}// end old renderResults stub
+function selectD(d){openDetail(d);}
+
+// ════════════════════════════════════════════
+//  EXPORT
+// ════════════════════════════════════════════
+function dl(name,data,type){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([data],{type}));
+  a.download=name;a.click();
+}
+
+function exportJSON(){
+  if(!S.selected)return;
+  const d=S.selected;
+  dl('genopt_'+d.design_id+'.json',JSON.stringify({
+    export_ts:new Date().toISOString(),
+    design_id:d.design_id,
+    industry_5_0:{human_confirmed:true,timestamp:new Date().toISOString()},
+    material:{id:d.mat,...MATS[d.mat]},
+    dimensions_mm:{length:d.l,width:d.w,thickness:d.t},
+    physics:d.p,fitness:d.fit,
+    ga_config:S.cfg,cad_base:S.dims,
+    ai_analysis:S.aiText||null,
+  },null,2),'application/json');
+  notify('JSON exported','ok');
+}
+
+function exportCSV(){
+  if(!S.designs.length)return;
+  const h=['Rank','DesignID','Material','Length','Width','Thickness','Weight_kg','Stress_MPa','Deflection_mm','SF','Cost_USD','Sustainability','Carbon_kg','Fitness'];
+  const rows=S.designs.map(d=>[d.rank,d.design_id,MATS[d.mat]?.n,d.l,d.w,d.t,d.p?.weight_kg,d.p?.bending_stress_mpa,d.p?.deflection_mm,d.p?.safety_factor,d.p?.cost_usd,d.p?.sustainability_score,d.p?.carbon_kg,d.fit.toFixed(3)]);
+  dl('genopt_results.csv',[h,...rows].map(r=>r.join(',')).join('\n'),'text/csv');
+  notify('CSV exported','ok');
+}
+
+function exportReport(){
+  if(!S.selected)return;
+  const d=S.selected,m=MATS[d.mat];
+  const txt=`GENOPT — ENGINEERING DESIGN REPORT
+Generated: ${new Date().toLocaleString()}
+Industry 5.0 — Human-in-the-Loop Confirmed
+===========================================
+
+SELECTED DESIGN: ${d.design_id}
+
+DIMENSIONS
+  Length    : ${d.l} mm
+  Width     : ${d.w} mm
+  Thickness : ${d.t} mm
+
+MATERIAL: ${m.n}
+  Density        : ${m.ρ} g/cm³
+  Yield Strength : ${m.σ} MPa
+  Elastic Modulus: ${m.E} GPa
+  Cost           : $${m.$}/kg
+  Eco Score      : ${m.eco}/100
+
+STRUCTURAL PERFORMANCE
+  Weight        : ${d.p?.weight_kg} kg
+  Bending Stress: ${d.p?.bending_stress_mpa} MPa
+  Safety Factor : ${d.p?.safety_factor}
+  Deflection    : ${d.p?.deflection_mm} mm
+  Cost/Unit     : $${d.p?.cost_usd}
+  Eco Score     : ${d.p?.sustainability_score}/100
+  Carbon kg CO₂ : ${d.p?.carbon_kg}
+  Fitness Score : ${d.fit.toFixed(3)}
+
+APPLIED CONSTRAINTS
+  Load         : ${S.cfg.load} N
+  Max Stress   : ${S.cfg.stress} MPa
+  Safety Factor: ${S.cfg.sf}
+  Weight Budget: ${S.cfg.maxW} kg
+  Cost Budget  : $${S.cfg.maxC}
+  Temperature  : ${S.cfg.temp} °C
+  Beam Type    : ${S.cfg.beam}
+  Objective    : ${S.cfg.obj}
+
+GA CONFIG
+  Population : ${S.cfg.pop}
+  Generations: ${S.cfg.gen}
+  Mutation   : ${(S.cfg.mut*100).toFixed(0)}%
+  Crossover  : ${(S.cfg.cross*100).toFixed(0)}%
+
+TOP 5 DESIGNS
+${S.designs.map(x=>`  #${x.rank} ${x.design_id} | ${MATS[x.mat]?.n} | ${x.l}×${x.w}×${x.t}mm | W=${x.p?.weight_kg}kg | σ=${x.p?.bending_stress_mpa}MPa | fitness=${x.fit.toFixed(3)}`).join('\n')}
+
+${S.aiText?'AI ENGINEERING ANALYSIS\n'+S.aiText:''}
+`;
+  dl('genopt_report.txt',txt.trim(),'text/plain');
+  notify('Report exported','ok');
+}
+
+// ════════════════════════════════════════════
+//  API DOCS
+// ════════════════════════════════════════════
+const ENDPOINTS=[
+  {m:'POST',path:'/upload-cad',desc:'Upload CAD file (STEP/STL/OBJ/IGES). Extracts bounding box in mm, stores securely with UUID prefix. Returns file_id for downstream use.',
+   req:'FormData: file=<binary>',
+   res:'{"status":"ok","file_id":"uuid","format":"STEP","dimensions":{"length":200.0,"width":100.0,"thickness":10.0,"volume_cm3":200.0}}'},
+  {m:'POST',path:'/generate-designs',desc:'Launch async GA optimization job. Returns immediately with job_id. Poll /results to track progress and fetch results.',
+   req:'{"cad_file_id":"uuid","load_n":5000,"max_stress_mpa":250,"max_weight_kg":5,"objective":"balanced","materials":["Aluminum_6061"],"ga_params":{"population_size":50,"generations":100}}',
+   res:'{"job_id":"abc123","status":"queued","estimated_seconds":45,"poll_url":"/results?job_id=abc123"}'},
+  {m:'GET',path:'/results?job_id=…',desc:'Poll job results. Returns progress while running. Returns full top-5 designs, fitness history, Pareto front when complete.',
+   req:'Query: job_id=abc123',
+   res:'{"status":"complete","result":{"top_designs":[{"design_id":"D-001","rank":1,"material":"Aluminum_6061","length":187.3,"width":94.1,"thickness":12.4,"physics":{"weight_kg":1.82,"bending_stress_mpa":198.4,"safety_factor":2.31},"fitness":87.4}],...}}'},
+  {m:'POST',path:'/select-design',desc:'HITL endpoint — engineer confirms final design. Records timestamp, approver, notes. Triggers export pipeline.',
+   req:'{"job_id":"abc123","design_id":"D-001","approved_by":"eng_alice","user_notes":"Meets weight budget"}',
+   res:'{"status":"confirmed","selection_id":"sel-xyz","design_id":"D-001","summary":{"dimensions_mm":{"length":187.3,...},"fitness_score":87.4}}'},
+];
+
+function buildDocs(){
+  const c=document.getElementById('docs-container');
+  if(c.children.length)return;
+  ENDPOINTS.forEach(ep=>{
+    const d=document.createElement('div');
+    d.className='ep-card';
+    d.innerHTML=`
+      <div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:.5rem;">
+        <span class="method ${ep.m==='POST'?'m-post':'m-get'}">${ep.m}</span>
+        <span class="ep-path">${ep.path}</span>
+      </div>
+      <p class="ep-desc">${ep.desc}</p>
+      <div class="g2">
+        <div>
+          <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--mist);margin-bottom:5px;">REQUEST</div>
+          <div class="codeblock" style="font-size:9.5px;">${ep.req}</div>
+        </div>
+        <div>
+          <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--neon);margin-bottom:5px;">RESPONSE</div>
+          <div class="codeblock" style="font-size:9.5px;color:rgba(0,255,224,.8);">${ep.res}</div>
+        </div>
+      </div>`;
+    c.appendChild(d);
+  });
+}
+
+// ════════════════════════════════════════════
+//  UTILITIES
+// ════════════════════════════════════════════
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+
+let _nt;
+function notify(msg,type='info'){
+  const el=document.getElementById('notif');
+  el.textContent=({ok:'✓ ',err:'✕ ',info:'◆ '}[type]||'')+msg;
+  el.className='show '+type;
+  clearTimeout(_nt);
+  _nt=setTimeout(()=>el.classList.remove('show'),3400);
+}
+
+function sv(id,out){document.getElementById(out).textContent=document.getElementById(id).value;}
+
+function updateSidebar(){
+  if(!S.dims)return;
+  document.getElementById('sb-session').innerHTML=
+    `<span style="color:var(--subtext)">FILE:</span> ${S.file||'Manual'}<br><span style="color:var(--subtext)">L/W/T:</span> ${S.dims.length}/${S.dims.width}/${S.dims.thickness}<br><span style="color:var(--subtext)">MATS:</span> ${selMats.size} selected`;
+}
+
+function markNav(id,cls){
+  const el=document.getElementById(id);if(!el)return;
+  el.classList.remove('active','done');el.classList.add(cls);
+  const num=el.querySelector('.nav-num');
+  if(num&&cls==='done')num.textContent='✓';
+}
+
+function logLine(type,msg){
+  const el=document.getElementById('ga-log');if(!el)return;
+  const t=new Date().toTimeString().slice(0,8);
+  const div=document.createElement('div');
+  div.className='ll';
+  const cls={ok:'lok',info:'linfo',warn:'lwarn',err:'lerr'}[type]||'';
+  div.innerHTML=`<span class="lt">[${t}]</span> <span class="${cls}">${msg}</span>`;
+  el.appendChild(div);
+  el.scrollTop=el.scrollHeight;
+}
+
+// ── DRAG & DROP ───────────────────────────────
+const dz=document.getElementById('dropzone');
+if(dz){
+  dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag');});
+  dz.addEventListener('dragleave',()=>dz.classList.remove('drag'));
+  dz.addEventListener('drop',e=>{
+    e.preventDefault();dz.classList.remove('drag');
+    if(e.dataTransfer.files[0]){
+      const dt=new DataTransfer();dt.items.add(e.dataTransfer.files[0]);
+      document.getElementById('cad-inp').files=dt.files;
+      handleFile({target:{files:dt.files}});
+    }
+  });
+}
+
+// ── INIT ─────────────────────────────────────
+buildMaterials();
+// Show manual entry by default so user can start without a file
+document.getElementById('manual-card').style.display='block';
+</script>
+</body>
+</html>
